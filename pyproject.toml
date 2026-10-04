@@ -34,6 +34,10 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+filterwarnings = [
+    # O Starlette 1.7 recomenda o httpx2 no TestClient; trocar exige dependência nova.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
 
 [dependency-groups]
 dev = [

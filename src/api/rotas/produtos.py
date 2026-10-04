@@ -1,0 +1,87 @@
+from http import HTTPStatus
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
+from pydantic import StringConstraints
+
+from src.api.autenticacao import AdminLogado, exigir_perfil
+from src.api.dependencias import ConexaoBanco
+from src.api.schemas.campos import TAMANHO_MAXIMO_NOME, IdDoRecurso, SemCaractereNulo
+from src.api.schemas.paginacao import Pagina, ParametrosPaginacao, obter_paginacao
+from src.api.schemas.produtos import AlteracaoProduto, NovoProduto, ProdutoResposta
+from src.application.produtos.produtos import (
+    atualizar_produto,
+    cadastrar_produto,
+    consultar_produto,
+    desativar_produto,
+    listar_produtos,
+)
+from src.domain.produto.produto import DadosProduto
+from src.domain.usuario.usuario import Perfil
+
+roteador = APIRouter(prefix="/produtos", tags=["Produtos"])
+
+
+@roteador.get("")
+def listar_produtos_da_rede(
+    paginacao: Annotated[ParametrosPaginacao, Depends(obter_paginacao)],
+    conexao: ConexaoBanco,
+    nome: Annotated[
+        str | None,
+        StringConstraints(min_length=1, max_length=TAMANHO_MAXIMO_NOME),
+        SemCaractereNulo,
+        Query(),
+    ] = None,
+) -> Pagina[ProdutoResposta]:
+    produtos, total = listar_produtos(conexao, nome, paginacao.limit, paginacao.offset)
+    return Pagina[ProdutoResposta].criar(
+        [ProdutoResposta.model_validate(produto, from_attributes=True) for produto in produtos],
+        total,
+        paginacao,
+    )
+
+
+@roteador.get("/{id}")
+def consultar_produto_por_id(produto_id: IdDoRecurso, conexao: ConexaoBanco) -> ProdutoResposta:
+    return ProdutoResposta.model_validate(
+        consultar_produto(conexao, produto_id), from_attributes=True
+    )
+
+
+@roteador.post(
+    "", status_code=HTTPStatus.CREATED, dependencies=[Depends(exigir_perfil(Perfil.ADMIN))]
+)
+def cadastrar_novo_produto(novo: NovoProduto, conexao: ConexaoBanco) -> ProdutoResposta:
+    dados = DadosProduto(
+        nome=novo.nome,
+        descricao=novo.descricao,
+        preco=novo.preco,
+        disponivel_de=novo.disponivel_de,
+        disponivel_ate=novo.disponivel_ate,
+    )
+    return ProdutoResposta.model_validate(cadastrar_produto(conexao, dados), from_attributes=True)
+
+
+@roteador.put("/{id}")
+def atualizar_produto_existente(
+    produto_id: IdDoRecurso,
+    alteracao: AlteracaoProduto,
+    admin: AdminLogado,
+    conexao: ConexaoBanco,
+) -> ProdutoResposta:
+    dados = DadosProduto(
+        nome=alteracao.nome,
+        descricao=alteracao.descricao,
+        preco=alteracao.preco,
+        disponivel_de=alteracao.disponivel_de,
+        disponivel_ate=alteracao.disponivel_ate,
+    )
+    produto = atualizar_produto(conexao, admin.id, produto_id, dados, alteracao.ativo)
+    return ProdutoResposta.model_validate(produto, from_attributes=True)
+
+
+@roteador.delete("/{id}", status_code=HTTPStatus.NO_CONTENT)
+def desativar_produto_existente(
+    produto_id: IdDoRecurso, admin: AdminLogado, conexao: ConexaoBanco
+) -> None:
+    desativar_produto(conexao, admin.id, produto_id)

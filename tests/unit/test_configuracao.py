@@ -71,3 +71,19 @@ def test_rejeita_url_de_banco_que_nao_e_postgres(ambiente):
 
     with pytest.raises(ConfiguracaoInvalida, match="BANCO_URL"):
         carregar_configuracao()
+
+
+def test_repr_da_configuracao_nao_expoe_segredos(ambiente):
+    texto = repr(carregar_configuracao())
+
+    assert VARIAVEIS_VALIDAS["JWT_SEGREDO"] not in texto
+    assert "senha" not in texto
+
+
+def test_erro_de_configuracao_nao_expoe_o_valor_recebido(ambiente):
+    ambiente.setenv("JWT_SEGREDO", "segredo-curto")
+
+    with pytest.raises(ConfiguracaoInvalida) as erro:
+        carregar_configuracao()
+
+    assert "segredo-curto" not in str(erro.value.__cause__)

@@ -6,7 +6,8 @@ from sqlalchemy import func, insert, select, text
 from sqlalchemy.exc import IntegrityError
 
 from src.domain.estoque.estoque import TipoMovimentacao
-from src.domain.pagamento.pagamento import FormaPagamento
+from src.domain.fidelidade.fidelidade import TipoTransacaoFidelidade
+from src.domain.pagamento.pagamento import FormaPagamento, StatusPagamento
 from src.domain.pedido.pedido import CanalPedido, StatusPedido
 from src.domain.unidade.unidade import TipoUnidade
 from src.domain.usuario.usuario import Perfil
@@ -14,8 +15,10 @@ from src.infrastructure.database.tabelas import (
     estoque,
     item_pedido,
     movimentacao_estoque,
+    pagamento,
     pedido,
     produto,
+    transacao_fidelidade,
     unidade,
     usuario,
 )
@@ -66,12 +69,15 @@ def test_rejeita_cliente_vinculado_a_unidade(conexao_teste):
 def test_aceita_atendente_lotado_em_unidade(conexao_teste):
     unidade_id = _criar_unidade(conexao_teste)
 
-    conexao_teste.execute(
-        insert(usuario), _dados_usuario(perfil=Perfil.ATENDENTE, unidade_id=unidade_id)
-    )
+    usuario_id = conexao_teste.execute(
+        insert(usuario).returning(usuario.c.id),
+        _dados_usuario(perfil=Perfil.ATENDENTE, unidade_id=unidade_id),
+    ).scalar_one()
 
-    total = conexao_teste.execute(select(func.count()).select_from(usuario)).scalar_one()
-    assert total == 1
+    perfil = conexao_teste.execute(
+        select(usuario.c.perfil).where(usuario.c.id == usuario_id)
+    ).scalar_one()
+    assert perfil == Perfil.ATENDENTE
 
 
 def test_rejeita_perfil_fora_do_enum(conexao_teste):
@@ -212,4 +218,86 @@ def test_rejeita_movimentacao_com_quantidade_zero(conexao_teste):
                 "motivo": "Teste",
                 "usuario_id": _criar_cliente(conexao_teste),
             },
+        )
+
+
+def _criar_pedido(conexao) -> int:
+    return conexao.execute(
+        insert(pedido).returning(pedido.c.id), _dados_pedido(conexao)
+    ).scalar_one()
+
+
+def _dados_pagamento(pedido_id: int, **campos) -> dict:
+    return {
+        "pedido_id": pedido_id,
+        "status": StatusPagamento.APROVADO,
+        "valor": Decimal("37.80"),
+        "forma_pagamento": FormaPagamento.MOCK,
+    } | campos
+
+
+def _dados_transacao(conexao, tipo: TipoTransacaoFidelidade, pontos: int) -> dict:
+    dados_pedido = _dados_pedido(conexao)
+    pedido_id = conexao.execute(insert(pedido).returning(pedido.c.id), dados_pedido).scalar_one()
+    return {
+        "cliente_id": dados_pedido["cliente_id"],
+        "tipo": tipo,
+        "pontos": pontos,
+        "pedido_id": pedido_id,
+    }
+
+
+def test_rejeita_pagamento_com_valor_zero(conexao_teste):
+    with pytest.raises(IntegrityError):
+        conexao_teste.execute(
+            insert(pagamento),
+            _dados_pagamento(_criar_pedido(conexao_teste), valor=Decimal("0")),
+        )
+
+
+def test_rejeita_chave_de_idempotencia_repetida(conexao_teste):
+    pedido_id = _criar_pedido(conexao_teste)
+    conexao_teste.execute(insert(pagamento), _dados_pagamento(pedido_id, chave_idempotencia="k1"))
+
+    with pytest.raises(IntegrityError):
+        conexao_teste.execute(
+            insert(pagamento), _dados_pagamento(pedido_id, chave_idempotencia="k1")
+        )
+
+
+def test_aceita_varios_pagamentos_sem_chave_de_idempotencia(conexao_teste):
+    pedido_id = _criar_pedido(conexao_teste)
+
+    conexao_teste.execute(
+        insert(pagamento),
+        [_dados_pagamento(pedido_id), _dados_pagamento(pedido_id, status=StatusPagamento.RECUSADO)],
+    )
+    total = conexao_teste.execute(
+        select(func.count()).select_from(pagamento).where(pagamento.c.pedido_id == pedido_id)
+    ).scalar_one()
+
+    assert total == 2
+
+
+def test_rejeita_transacao_de_fidelidade_com_zero_pontos(conexao_teste):
+    with pytest.raises(IntegrityError):
+        conexao_teste.execute(
+            insert(transacao_fidelidade),
+            _dados_transacao(conexao_teste, TipoTransacaoFidelidade.ESTORNO, 0),
+        )
+
+
+def test_rejeita_acumulo_negativo(conexao_teste):
+    with pytest.raises(IntegrityError):
+        conexao_teste.execute(
+            insert(transacao_fidelidade),
+            _dados_transacao(conexao_teste, TipoTransacaoFidelidade.ACUMULO, -10),
+        )
+
+
+def test_rejeita_resgate_positivo(conexao_teste):
+    with pytest.raises(IntegrityError):
+        conexao_teste.execute(
+            insert(transacao_fidelidade),
+            _dados_transacao(conexao_teste, TipoTransacaoFidelidade.RESGATE, 100),
         )

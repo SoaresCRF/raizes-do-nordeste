@@ -1,9 +1,11 @@
 from collections.abc import Iterator
 from typing import Annotated
 
-from fastapi import Depends, Request
+from fastapi import Depends, Header, Request
 from sqlalchemy import Connection
 
+from src.application.portas.gateway_pagamento import GatewayPagamento
+from src.infrastructure.pagamento.gateway_mock import GatewayPagamentoMock, ResultadoSimulado
 from src.infrastructure.seguranca.hash_senha import HashSenha
 from src.infrastructure.seguranca.token import TokenJwt
 
@@ -30,3 +32,15 @@ def obter_token_jwt(request: Request) -> TokenJwt:
 
 
 ServicoToken = Annotated[TokenJwt, Depends(obter_token_jwt)]
+
+
+def obter_gateway_pagamento(
+    resultado: Annotated[
+        ResultadoSimulado, Header(alias="X-Simular-Resultado")
+    ] = ResultadoSimulado.APROVADO,
+) -> GatewayPagamento:
+    # O header só existe porque o gateway é simulado (Q06): não chega ao caso de uso.
+    return GatewayPagamentoMock(resultado)
+
+
+ServicoGatewayPagamento = Annotated[GatewayPagamento, Depends(obter_gateway_pagamento)]

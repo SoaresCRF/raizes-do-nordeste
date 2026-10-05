@@ -40,3 +40,9 @@ def exigir_perfil(*perfis: Perfil) -> Callable[[UsuarioAutenticado], UsuarioAute
 
 ClienteLogado = Annotated[UsuarioAutenticado, Depends(exigir_perfil(Perfil.CLIENTE))]
 AdminLogado = Annotated[UsuarioAutenticado, Depends(exigir_perfil(Perfil.ADMIN))]
+FuncionarioLogado = Annotated[
+    UsuarioAutenticado,
+    Depends(exigir_perfil(Perfil.ATENDENTE, Perfil.COZINHA, Perfil.GERENTE, Perfil.ADMIN)),
+]
+
+GestorLogado = Annotated[UsuarioAutenticado, Depends(exigir_perfil(Perfil.GERENTE, Perfil.ADMIN))]

@@ -95,3 +95,17 @@ class RepositorioProdutos:
             update(produto).where(produto.c.id == produto_id).values(ativo=False).returning(produto)
         )
         return Produto(**self._conexao.execute(comando).one()._mapping)
+
+    def buscar_por_ids(self, produto_ids: list[int]) -> dict[int, Produto]:
+        consulta = select(produto).where(produto.c.id.in_(produto_ids))
+        return {linha.id: Produto(**linha._mapping) for linha in self._conexao.execute(consulta)}
+
+    def listar_ids_no_cardapio(
+        self, unidade_id: int, produto_ids: list[int], hoje: date
+    ) -> set[int]:
+        consulta = (
+            select(produto.c.id)
+            .select_from(_PRODUTO_COM_ESTOQUE)
+            .where(*_no_cardapio(unidade_id, hoje), produto.c.id.in_(produto_ids))
+        )
+        return set(self._conexao.execute(consulta).scalars())

@@ -2,7 +2,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
 
-from src.domain.erros.erros import MENSAGEM_DADOS_INVALIDOS, DadosInvalidos, DetalheErro
+from src.domain.erros.erros import (
+    MENSAGEM_DADOS_INVALIDOS,
+    AcessoNegado,
+    DadosInvalidos,
+    DetalheErro,
+)
 
 
 class Perfil(StrEnum):
@@ -77,3 +82,12 @@ class UsuarioAutenticado:
     perfil: Perfil
     unidade_id: int | None
     sessao_id: int
+
+
+def verificar_acesso_a_unidade(usuario: UsuarioAutenticado, unidade_id: int) -> None:
+    """Funcionário de unidade só atua na própria; ADMIN atua na rede toda (RN23).
+
+    Não decide o que cada perfil pode fazer: isso fica com `exigir_perfil` na rota.
+    """
+    if usuario.perfil in PERFIS_LOTADOS_EM_UNIDADE and usuario.unidade_id != unidade_id:
+        raise AcessoNegado(f"Usuário sem acesso à unidade {unidade_id}")

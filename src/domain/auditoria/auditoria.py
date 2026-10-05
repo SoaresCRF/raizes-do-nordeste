@@ -7,6 +7,14 @@ class AcaoAuditoria(StrEnum):
     UNIDADE_CRIADA = "UNIDADE_CRIADA"
     PRODUTO_ALTERADO = "PRODUTO_ALTERADO"
     PRODUTO_DESATIVADO = "PRODUTO_DESATIVADO"
+    ESTOQUE_MOVIMENTADO = "ESTOQUE_MOVIMENTADO"
+    PEDIDO_CRIADO = "PEDIDO_CRIADO"
+    ACESSO_DADOS_PESSOAIS = "ACESSO_DADOS_PESSOAIS"
+    STATUS_ALTERADO = "STATUS_ALTERADO"
+    PEDIDO_CANCELADO = "PEDIDO_CANCELADO"
+    PAGAMENTO_REGISTRADO = "PAGAMENTO_REGISTRADO"
+    PONTOS_RESGATADOS = "PONTOS_RESGATADOS"
+    PAGAMENTO_ESTORNADO = "PAGAMENTO_ESTORNADO"
 
 
 @dataclass
@@ -22,3 +30,11 @@ class LogAuditoria:
     request_id: str | None
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass(frozen=True)
+class FiltrosAuditoria:
+    entidade: str | None
+    entidade_id: int | None
+    acao: AcaoAuditoria | None
+    unidade_id: int | None

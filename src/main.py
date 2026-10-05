@@ -7,8 +7,14 @@ from fastapi import FastAPI
 
 from src.api.middlewares.limite_corpo import MiddlewareLimiteCorpo
 from src.api.middlewares.requisicao import MiddlewareRequisicao
+from src.api.rotas import auditoria as rotas_auditoria
 from src.api.rotas import auth as rotas_auth
+from src.api.rotas import estoque as rotas_estoque
+from src.api.rotas import fidelidade as rotas_fidelidade
+from src.api.rotas import pagamentos as rotas_pagamentos
+from src.api.rotas import pedidos as rotas_pedidos
 from src.api.rotas import produtos as rotas_produtos
+from src.api.rotas import relatorios as rotas_relatorios
 from src.api.rotas import unidades as rotas_unidades
 from src.api.rotas import usuarios as rotas_usuarios
 from src.api.tratadores import registrar_tratadores_de_erro
@@ -44,6 +50,12 @@ def criar_app(configuracao: Configuracao) -> FastAPI:
     app.include_router(rotas_usuarios.roteador)
     app.include_router(rotas_unidades.roteador)
     app.include_router(rotas_produtos.roteador)
+    app.include_router(rotas_estoque.roteador)
+    app.include_router(rotas_pedidos.roteador)
+    app.include_router(rotas_pagamentos.roteador)
+    app.include_router(rotas_fidelidade.roteador)
+    app.include_router(rotas_auditoria.roteador)
+    app.include_router(rotas_relatorios.roteador)
     registrar_tratadores_de_erro(app)
     app.add_middleware(MiddlewareLimiteCorpo)
     app.add_middleware(MiddlewareRequisicao)

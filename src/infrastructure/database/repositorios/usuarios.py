@@ -50,6 +50,13 @@ class RepositorioUsuarios:
         ).one_or_none()
         return Usuario(**linha._mapping) if linha else None
 
+    def travar(self, usuario_id: int) -> None:
+        # FOR NO KEY UPDATE: serializa os resgates do cliente sem bloquear inserções que
+        # apontam para ele (pedido, transação de pontos, auditoria).
+        self._conexao.execute(
+            select(usuario.c.id).where(usuario.c.id == usuario_id).with_for_update(key_share=True)
+        )
+
     def anonimizar(self, usuario_id: int, nome: str, email: str, senha_hash: str) -> None:
         self._conexao.execute(
             update(usuario)

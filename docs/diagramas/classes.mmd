@@ -1,0 +1,172 @@
+classDiagram
+    direction LR
+
+    class Unidade {
+        +int id
+        +str nome
+        +str cidade
+        +str uf
+        +str regiao
+        +TipoUnidade tipo
+        +bool ativa
+    }
+    class Usuario {
+        +int id
+        +str nome
+        +str email
+        +str senha_hash
+        +Perfil perfil
+        +int unidade_id
+        +bool ativo
+        +datetime anonimizado_em
+    }
+    class Consentimento {
+        +int id
+        +int usuario_id
+        +FinalidadeConsentimento finalidade
+        +bool concedido
+        +str versao_termo
+        +datetime registrado_em
+    }
+    class Sessao {
+        +int id
+        +int usuario_id
+        +str refresh_token_hash
+        +datetime expira_em
+        +datetime revogada_em
+    }
+    class Produto {
+        +int id
+        +str nome
+        +str descricao
+        +Decimal preco
+        +bool ativo
+        +date disponivel_de
+        +date disponivel_ate
+    }
+    class Estoque {
+        +int id
+        +int unidade_id
+        +int produto_id
+        +int quantidade
+    }
+    class MovimentacaoEstoque {
+        +int id
+        +int estoque_id
+        +TipoMovimentacao tipo
+        +int quantidade
+        +str motivo
+        +int pedido_id
+        +int usuario_id
+    }
+    class Pedido {
+        +int id
+        +int cliente_id
+        +int unidade_id
+        +CanalPedido canal_pedido
+        +StatusPedido status
+        +FormaPagamento forma_pagamento
+        +Decimal subtotal
+        +Decimal desconto
+        +Decimal total
+        +int criado_por_id
+        +str motivo_cancelamento
+    }
+    class ItemPedido {
+        +int id
+        +int pedido_id
+        +int produto_id
+        +int quantidade
+        +Decimal preco_unitario
+    }
+    class Pagamento {
+        +int id
+        +int pedido_id
+        +StatusPagamento status
+        +Decimal valor
+        +FormaPagamento forma_pagamento
+        +str transacao_externa_id
+        +str motivo_recusa
+        +dict payload_gateway
+        +str chave_idempotencia
+    }
+    class TransacaoFidelidade {
+        +int id
+        +int cliente_id
+        +TipoTransacaoFidelidade tipo
+        +int pontos
+        +int pedido_id
+    }
+    class LogAuditoria {
+        +int id
+        +int usuario_id
+        +int unidade_id
+        +str acao
+        +str entidade
+        +int entidade_id
+        +dict dados_antes
+        +dict dados_depois
+        +str request_id
+    }
+    class GatewayPagamento {
+        <<interface>>
+        +cobrar(referencia: int, valor: Decimal) RespostaCobranca
+        +estornar(transacao_externa_id: str, valor: Decimal) None
+    }
+    class GatewayPagamentoMock {
+        +cobrar(referencia: int, valor: Decimal) RespostaCobranca
+        +estornar(transacao_externa_id: str, valor: Decimal) None
+    }
+
+    class Perfil {
+        <<enumeration>>
+        CLIENTE
+        ATENDENTE
+        COZINHA
+        GERENTE
+        ADMIN
+    }
+    class CanalPedido {
+        <<enumeration>>
+        APP
+        TOTEM
+        BALCAO
+        PICKUP
+        WEB
+    }
+    class StatusPedido {
+        <<enumeration>>
+        AGUARDANDO_PAGAMENTO
+        EM_PREPARO
+        PRONTO
+        ENTREGUE
+        CANCELADO
+    }
+    class StatusPagamento {
+        <<enumeration>>
+        PENDENTE
+        APROVADO
+        RECUSADO
+        ERRO
+        ESTORNADO
+    }
+
+    Unidade "0..1" -- "*" Usuario : lota
+    Usuario "1" -- "*" Consentimento : concede
+    Usuario "1" -- "*" Sessao : abre
+    Unidade "1" *-- "*" Estoque : possui
+    Produto "1" -- "*" Estoque : estocado em
+    Estoque "1" *-- "*" MovimentacaoEstoque : registra
+    Unidade "1" -- "*" Pedido : recebe
+    Usuario "0..1" -- "*" Pedido : faz
+    Pedido "1" *-- "1..*" ItemPedido : contém
+    Produto "1" -- "*" ItemPedido : vendido em
+    Pedido "1" -- "*" Pagamento : tentativas
+    Pedido "1" -- "*" TransacaoFidelidade : origina
+    Usuario "1" -- "*" TransacaoFidelidade : acumula
+    Usuario "0..1" -- "*" LogAuditoria : executa
+    GatewayPagamentoMock ..|> GatewayPagamento
+    Usuario --> Perfil
+    Pedido --> CanalPedido
+    Pedido --> StatusPedido
+    Pagamento --> StatusPagamento

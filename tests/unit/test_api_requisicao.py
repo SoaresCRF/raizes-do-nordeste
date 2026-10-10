@@ -3,8 +3,11 @@ import uuid
 
 import pytest
 from fastapi.testclient import TestClient
+from psycopg.errors import UniqueViolation
+from sqlalchemy.exc import IntegrityError
 
 FORMATO_TIMESTAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+EMAIL_DA_LINHA = "maria@exemplo.com.br"
 
 
 @pytest.fixture
@@ -16,6 +19,17 @@ def cliente(app):
     @app.get("/teste/falha")
     def falhar():
         raise RuntimeError("detalhe interno do banco")
+
+    @app.get("/teste/falha-banco")
+    def falhar_no_banco():
+        raise IntegrityError(
+            "INSERT INTO usuario (email) VALUES (%(email)s)",
+            None,
+            UniqueViolation(
+                'duplicate key value violates unique constraint "usuario_email_key"\n'
+                f"DETAIL:  Key (email)=({EMAIL_DA_LINHA}) already exists."
+            ),
+        )
 
     return TestClient(app)
 
@@ -45,6 +59,18 @@ def test_erro_inesperado_vai_para_o_log_com_o_mesmo_request_id(cliente, log_json
     uuid.UUID(corpo["requestId"])
     assert erro["request_id"] == corpo["requestId"]
     assert "RuntimeError: detalhe interno do banco" in erro["excecao"]
+
+
+def test_erro_de_banco_vai_para_o_log_sem_os_dados_da_linha(cliente, log_json):
+    resposta = cliente.get("/teste/falha-banco")
+
+    [erro] = _linhas_com(log_json, "Erro de banco")
+    assert resposta.status_code == 500
+    assert resposta.json()["error"] == "ERRO_INTERNO"
+    assert erro["nivel"] == "ERROR"
+    assert erro["request_id"] == resposta.json()["requestId"]
+    assert (erro["tipo_erro"], erro["sqlstate"]) == ("UniqueViolation", "23505")
+    assert EMAIL_DA_LINHA not in str(log_json())
 
 
 def test_registra_acesso_com_metodo_caminho_status_e_duracao(cliente, log_json):

@@ -1,0 +1,31 @@
+flowchart TD
+    inicio([Início]) --> login[Cliente ou atendente faz login<br/>POST /auth/login]
+    login --> cardapio[Consulta o cardápio da unidade<br/>GET /unidades/id/cardapio]
+    cardapio --> criar[Envia o pedido<br/>POST /pedidos]
+    criar --> body{Body e canal válidos?}
+    body -- não --> e422[422 VALIDACAO_FALHOU] --> fim1([Fim])
+    body -- sim --> acesso{Funcionário atua na<br/>própria unidade?}
+    acesso -- não --> e403[403 ACESSO_NEGADO] --> fim1
+    acesso -- sim --> existe{Unidade e produtos existem?}
+    existe -- não --> e404[404 RECURSO_NAO_ENCONTRADO] --> fim1
+    existe -- sim --> oferta{Produtos ofertados na unidade?}
+    oferta -- não --> e409o[409 PRODUTO_INDISPONIVEL_NA_UNIDADE] --> fim1
+    oferta -- sim --> saldo{Saldo suficiente?<br/>linhas de estoque travadas}
+    saldo -- não --> e409e[409 ESTOQUE_INSUFICIENTE] --> fim1
+    saldo -- sim --> registra[Cria o pedido AGUARDANDO_PAGAMENTO,<br/>copia os preços, baixa o estoque<br/>e audita PEDIDO_CRIADO]
+    registra --> resgate{Cliente quer<br/>resgatar pontos?}
+    resgate -- sim --> resgatar[POST /fidelidade/resgates<br/>desconto aplicado e total recalculado]
+    resgatar --> pagar
+    resgate -- não --> pagar[Solicita o pagamento<br/>POST /pagamentos]
+    pagar --> status{Pedido AGUARDANDO_PAGAMENTO?}
+    status -- não --> e409p[409 PAGAMENTO_NAO_PERMITIDO] --> fim1
+    status -- sim --> gateway[Registra o pagamento PENDENTE<br/>e chama o gateway mock]
+    gateway --> resultado{Resultado do gateway}
+    resultado -- APROVADO --> aprovado[Pagamento APROVADO, pedido EM_PREPARO,<br/>pontos creditados, auditoria]
+    resultado -- RECUSADO --> recusado[Pagamento RECUSADO, pedido inalterado,<br/>201 com o motivo]
+    recusado --> pagar
+    resultado -- falha ou timeout --> erro[Pagamento ERRO, pedido inalterado,<br/>503 GATEWAY_PAGAMENTO_INDISPONIVEL]
+    erro --> pagar
+    aprovado --> pronto[Cozinha marca PRONTO<br/>PATCH /pedidos/id/status]
+    pronto --> entregue[Atendente marca ENTREGUE<br/>PATCH /pedidos/id/status]
+    entregue --> fim2([Fim])

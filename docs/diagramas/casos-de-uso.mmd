@@ -1,0 +1,63 @@
+---
+config:
+  layout: elk
+---
+flowchart LR
+    cliente(("Cliente<br/>(App, Web, Totem, Pickup)"))
+    atendente(("Atendente<br/>(Balcão)"))
+
+    subgraph api["API Raízes do Nordeste"]
+        uc02(["UC02 Cadastrar-se e gerir consentimento"])
+        uc03(["UC03 Consultar cardápio da unidade"])
+        uc07(["UC07 Resgatar pontos"])
+        uc04(["UC04 Realizar pedido"])
+        uc05(["UC05 Validar estoque"])
+        uc01(["UC01 Autenticar"])
+        uc08(["UC08 Acompanhar pedido"])
+        uc09(["UC09 Atualizar status do pedido"])
+        uc06(["UC06 Solicitar pagamento"])
+        uc10(["UC10 Cancelar pedido"])
+        uc11(["UC11 Gerir unidades, produtos e funcionários"])
+        uc12(["UC12 Movimentar estoque"])
+        uc13(["UC13 Consultar auditoria e relatórios"])
+    end
+
+    cozinha(("Cozinha"))
+    gerente(("Gerente / Administrador"))
+    gateway(("Gateway de pagamento<br/>(sistema externo, mock)"))
+
+    cliente --- uc01
+    cliente --- uc02
+    cliente --- uc03
+    cliente --- uc04
+    cliente --- uc06
+    cliente --- uc07
+    cliente --- uc08
+    cliente --- uc10
+    atendente --- uc01
+    atendente --- uc04
+    atendente --- uc06
+    atendente --- uc08
+    atendente --- uc09
+    atendente --- uc10
+    uc01 --- cozinha
+    uc08 --- cozinha
+    uc09 --- cozinha
+    uc01 --- gerente
+    uc08 --- gerente
+    uc09 --- gerente
+    uc10 --- gerente
+    uc11 --- gerente
+    uc12 --- gerente
+    uc13 --- gerente
+    uc06 --- gateway
+    uc10 --- gateway
+
+    uc04 -. "«include»" .-> uc05
+    uc07 -. "«extend»" .-> uc04
+
+    linkStyle 0,1,2,3,4,5,6,7 stroke:#1f77b4,stroke-width:2px
+    linkStyle 8,9,10,11,12,13 stroke:#d95f02,stroke-width:2px
+    linkStyle 14,15,16 stroke:#1b9e77,stroke-width:2px
+    linkStyle 17,18,19,20,21,22,23 stroke:#7570b3,stroke-width:2px
+    linkStyle 24,25 stroke:#555555,stroke-width:2px

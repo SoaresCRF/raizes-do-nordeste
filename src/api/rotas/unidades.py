@@ -1,11 +1,12 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 from pydantic import StringConstraints
 
 from src.api.autenticacao import AdminLogado, exigir_perfil
 from src.api.dependencias import ConexaoBanco
+from src.api.openapi import unidades as documentacao
 from src.api.schemas.campos import IdDoRecurso, SemCaractereNulo
 from src.api.schemas.paginacao import Pagina, ParametrosPaginacao, obter_paginacao
 from src.api.schemas.produtos import ItemCardapioResposta
@@ -28,7 +29,7 @@ from src.domain.usuario.usuario import Perfil
 roteador = APIRouter(prefix="/unidades", tags=["Unidades"])
 
 
-@roteador.get("")
+@roteador.get("", **documentacao.LISTAR_UNIDADES)
 def listar_unidades_da_rede(
     paginacao: Annotated[ParametrosPaginacao, Depends(obter_paginacao)],
     conexao: ConexaoBanco,
@@ -47,16 +48,18 @@ def listar_unidades_da_rede(
     )
 
 
-@roteador.get("/{id}")
+@roteador.get("/{id}", **documentacao.CONSULTAR_UNIDADE)
 def consultar_unidade_por_id(unidade_id: IdDoRecurso, conexao: ConexaoBanco) -> UnidadeResposta:
     return UnidadeResposta.model_validate(
         consultar_unidade(conexao, unidade_id), from_attributes=True
     )
 
 
-@roteador.post("", status_code=HTTPStatus.CREATED)
+@roteador.post("", status_code=HTTPStatus.CREATED, **documentacao.CADASTRAR_UNIDADE)
 def cadastrar_nova_unidade(
-    nova: NovaUnidade, admin: AdminLogado, conexao: ConexaoBanco
+    nova: Annotated[NovaUnidade, Body(openapi_examples=documentacao.EXEMPLOS_CADASTRAR_UNIDADE)],
+    admin: AdminLogado,
+    conexao: ConexaoBanco,
 ) -> UnidadeResposta:
     dados = DadosUnidade(
         nome=nova.nome, cidade=nova.cidade, uf=nova.uf, regiao=nova.regiao, tipo=nova.tipo
@@ -66,9 +69,17 @@ def cadastrar_nova_unidade(
     )
 
 
-@roteador.put("/{id}", dependencies=[Depends(exigir_perfil(Perfil.ADMIN))])
+@roteador.put(
+    "/{id}",
+    dependencies=[Depends(exigir_perfil(Perfil.ADMIN))],
+    **documentacao.ATUALIZAR_UNIDADE,
+)
 def atualizar_unidade_existente(
-    unidade_id: IdDoRecurso, alteracao: AlteracaoUnidade, conexao: ConexaoBanco
+    unidade_id: IdDoRecurso,
+    alteracao: Annotated[
+        AlteracaoUnidade, Body(openapi_examples=documentacao.EXEMPLOS_ATUALIZAR_UNIDADE)
+    ],
+    conexao: ConexaoBanco,
 ) -> UnidadeResposta:
     dados = DadosUnidade(
         nome=alteracao.nome,
@@ -82,7 +93,7 @@ def atualizar_unidade_existente(
     )
 
 
-@roteador.get("/{id}/cardapio")
+@roteador.get("/{id}/cardapio", **documentacao.CONSULTAR_CARDAPIO)
 def consultar_cardapio_da_unidade(
     unidade_id: IdDoRecurso,
     paginacao: Annotated[ParametrosPaginacao, Depends(obter_paginacao)],

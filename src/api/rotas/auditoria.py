@@ -5,6 +5,7 @@ from pydantic import StringConstraints
 
 from src.api.autenticacao import GestorLogado
 from src.api.dependencias import ConexaoBanco
+from src.api.openapi import auditoria as documentacao
 from src.api.schemas.auditoria import TAMANHO_MAXIMO_ENTIDADE, LogAuditoriaResposta
 from src.api.schemas.campos import ID_MAXIMO, SemCaractereNulo
 from src.api.schemas.paginacao import Pagina, ParametrosPaginacao, obter_paginacao
@@ -14,7 +15,7 @@ from src.domain.auditoria.auditoria import AcaoAuditoria, FiltrosAuditoria
 roteador = APIRouter(prefix="/auditoria", tags=["Auditoria"])
 
 
-@roteador.get("")
+@roteador.get("", **documentacao.LISTAR_AUDITORIA)
 def listar_registros_de_auditoria(
     paginacao: Annotated[ParametrosPaginacao, Depends(obter_paginacao)],
     usuario: GestorLogado,

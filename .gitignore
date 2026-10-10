@@ -24,3 +24,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Rascunho do relatório (o PDF final é entregue no AVA, não no repositório)
+docs/relatorio/

@@ -3,10 +3,12 @@ from contextlib import asynccontextmanager
 from datetime import timedelta
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 
 from src.api.middlewares.limite_corpo import MiddlewareLimiteCorpo
 from src.api.middlewares.requisicao import MiddlewareRequisicao
+from src.api.openapi.exemplos import preservar_exemplos
+from src.api.openapi.geral import DESCRICAO_API, TAGS
 from src.api.rotas import auditoria as rotas_auditoria
 from src.api.rotas import auth as rotas_auth
 from src.api.rotas import estoque as rotas_estoque
@@ -28,6 +30,20 @@ from src.infrastructure.seguranca.token import TokenJwt
 HOST = "127.0.0.1"
 
 
+ROTEADORES: list[APIRouter] = [
+    rotas_auth.roteador,
+    rotas_usuarios.roteador,
+    rotas_unidades.roteador,
+    rotas_produtos.roteador,
+    rotas_estoque.roteador,
+    rotas_pedidos.roteador,
+    rotas_pagamentos.roteador,
+    rotas_fidelidade.roteador,
+    rotas_auditoria.roteador,
+    rotas_relatorios.roteador,
+]
+
+
 def criar_app(configuracao: Configuracao) -> FastAPI:
     @asynccontextmanager
     async def ciclo_de_vida(app: FastAPI) -> AsyncIterator[None]:
@@ -38,6 +54,8 @@ def criar_app(configuracao: Configuracao) -> FastAPI:
     app = FastAPI(
         title="Raízes do Nordeste",
         version="0.1.0",
+        description=DESCRICAO_API,
+        openapi_tags=TAGS,
         docs_url="/docs",
         openapi_url="/docs/openapi.json",
         lifespan=ciclo_de_vida,
@@ -46,16 +64,10 @@ def criar_app(configuracao: Configuracao) -> FastAPI:
     app.state.token_jwt = TokenJwt(
         configuracao.jwt_segredo, timedelta(minutes=configuracao.jwt_expiracao_minutos)
     )
-    app.include_router(rotas_auth.roteador)
-    app.include_router(rotas_usuarios.roteador)
-    app.include_router(rotas_unidades.roteador)
-    app.include_router(rotas_produtos.roteador)
-    app.include_router(rotas_estoque.roteador)
-    app.include_router(rotas_pedidos.roteador)
-    app.include_router(rotas_pagamentos.roteador)
-    app.include_router(rotas_fidelidade.roteador)
-    app.include_router(rotas_auditoria.roteador)
-    app.include_router(rotas_relatorios.roteador)
+    app.state.gateway_timeout_segundos = configuracao.gateway_timeout_segundos
+    for roteador in ROTEADORES:
+        app.include_router(roteador)
+    preservar_exemplos(app)
     registrar_tratadores_de_erro(app)
     app.add_middleware(MiddlewareLimiteCorpo)
     app.add_middleware(MiddlewareRequisicao)

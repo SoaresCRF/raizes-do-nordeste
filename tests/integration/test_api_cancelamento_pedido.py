@@ -340,6 +340,23 @@ def test_falha_do_gateway_no_estorno_nao_cancela_nada(
     assert saldo_de_estoque(UNIDADE_RECIFE, CAFE_COMPLETO) == estoque_antes
 
 
+def test_timeout_no_estorno_nao_cancela_nada(
+    cliente_http, entrar, cliente_novo, acumular_pontos, banco_semeado
+):
+    pedido_id = acumular_pontos(cliente_novo, 1)
+
+    resposta = cliente_http.post(
+        f"{URL}/{pedido_id}/cancelamento",
+        json={"motivo": MOTIVO},
+        headers=entrar(EMAIL_GERENTE_RECIFE) | {"X-Simular-Resultado": "TIMEOUT"},
+    )
+
+    assert resposta.status_code == 503
+    assert resposta.json()["error"] == "GATEWAY_PAGAMENTO_INDISPONIVEL"
+    assert _status(banco_semeado, pedido_id) == "EM_PREPARO"
+    assert _status_do_pagamento(banco_semeado, pedido_id) == "APROVADO"
+
+
 def test_cancelamento_devolve_os_pontos_resgatados(
     cliente_http, entrar_como_cliente, cliente_novo, acumular_pontos, fazer_pedido, saldo_de_pontos
 ):

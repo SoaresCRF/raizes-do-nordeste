@@ -3,12 +3,30 @@ import time
 import uuid
 from http import HTTPStatus
 
+from sqlalchemy.exc import DBAPIError
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.api.erros import ERRO_INTERNO, MENSAGEM_ERRO_INTERNO, resposta_de_erro
 from src.infrastructure.logging.logger import request_id_atual
 
 logger = logging.getLogger(__name__)
+
+
+def _registrar_erro_inesperado(scope: Scope, erro: Exception) -> None:
+    if isinstance(erro, DBAPIError):
+        # O DETAIL do Postgres repete valores da linha (e-mail, nome): sem a mensagem nem o
+        # traceback, só o tipo e o SQLSTATE vão para o log (RNF07).
+        logger.error(
+            "Erro de banco em %s %s",
+            scope["method"],
+            scope["path"],
+            extra={
+                "tipo_erro": type(erro.orig).__name__,
+                "sqlstate": getattr(erro.orig, "sqlstate", None),
+            },
+        )
+        return
+    logger.exception("Erro inesperado em %s %s", scope["method"], scope["path"])
 
 
 class MiddlewareRequisicao:
@@ -36,8 +54,8 @@ class MiddlewareRequisicao:
 
         try:
             await self.app(scope, receive, enviar)
-        except Exception:
-            logger.exception("Erro inesperado em %s %s", scope["method"], scope["path"])
+        except Exception as erro:
+            _registrar_erro_inesperado(scope, erro)
             if resposta_iniciada:
                 raise
             resposta = resposta_de_erro(

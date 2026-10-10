@@ -1,0 +1,39 @@
+---
+config:
+  layout: elk
+---
+flowchart TB
+    clientes["Canais: App, Web, Totem, Pickup, Balcão"]
+    subgraph api["API (src/api)"]
+        rotas["rotas, schemas, autenticação, middlewares, tratador de erros, OpenAPI"]
+    end
+    subgraph application["Application (src/application)"]
+        casos["casos de uso por recurso"]
+        portas["portas: GatewayPagamento"]
+    end
+    subgraph domain["Domain (src/domain)"]
+        entidades["entidades, enums, regras e erros de domínio"]
+    end
+    subgraph infrastructure["Infrastructure (src/infrastructure)"]
+        banco["database: tabelas, migrations, repositórios, seed"]
+        pagamento["pagamento: GatewayPagamentoMock"]
+        seguranca["seguranca: hash argon2, JWT"]
+        logging["logging: logs JSON com request_id"]
+    end
+    postgres[("PostgreSQL 17")]
+
+    clientes -- "HTTP + JSON, JWT Bearer" --> rotas
+    rotas --> casos
+    rotas --> entidades
+    rotas --> banco
+    rotas --> portas
+    rotas --> pagamento
+    rotas --> seguranca
+    rotas --> logging
+    casos --> entidades
+    casos --> banco
+    casos --> portas
+    casos --> seguranca
+    pagamento -. implementa .-> portas
+    banco --> postgres
+    banco --> entidades

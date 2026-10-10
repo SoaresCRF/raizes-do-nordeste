@@ -1,0 +1,723 @@
+newman
+
+Raízes do Nordeste — API
+
+→ T87 – Swagger acessível
+  GET http://127.0.0.1:8000/docs [200 OK, 1.16kB, 25ms]
+  √  Resposta sem dados sensíveis
+  √  T87 devolve o Swagger UI
+
+□ Auth
+└ T01 – Login válido
+  POST http://127.0.0.1:8000/auth/login [200 OK, 501B, 105ms]
+  √  Resposta sem dados sensíveis
+  √  T01 devolve o token do cliente
+
+└ Prep – Login do atendente
+  POST http://127.0.0.1:8000/auth/login [200 OK, 505B, 63ms]
+  √  Resposta sem dados sensíveis
+  √  Login de ATENDENTE guarda o token
+
+└ Prep – Login da cozinha
+  POST http://127.0.0.1:8000/auth/login [200 OK, 498B, 62ms]
+  √  Resposta sem dados sensíveis
+  √  Login de COZINHA guarda o token
+
+└ Prep – Login do gerente de Recife
+  POST http://127.0.0.1:8000/auth/login [200 OK, 498B, 63ms]
+  √  Resposta sem dados sensíveis
+  √  Login de GERENTE guarda o token
+
+└ Prep – Login do admin
+  POST http://127.0.0.1:8000/auth/login [200 OK, 504B, 61ms]
+  √  Resposta sem dados sensíveis
+  √  Login de ADMIN guarda o token
+
+└ Prep – Login do cliente sem consentimento
+  POST http://127.0.0.1:8000/auth/login [200 OK, 511B, 65ms]
+  √  Resposta sem dados sensíveis
+  √  Login de CLIENTE guarda o token
+
+└ T04 – Refresh válido
+  POST http://127.0.0.1:8000/auth/refresh [200 OK, 382B, 18ms]
+  √  Resposta sem dados sensíveis
+  √  T04 devolve um novo access token
+
+└ Prep – Login de uma sessão para encerrar
+  POST http://127.0.0.1:8000/auth/login [200 OK, 501B, 64ms]
+  √  Resposta sem dados sensíveis
+  √  Abre uma sessão separada para o logout
+
+└ T06 – Logout
+  POST http://127.0.0.1:8000/auth/logout [204 No Content, 113B, 13ms]
+  √  Resposta sem dados sensíveis
+  √  T06 encerra a sessão com 204
+
+□ Usuarios
+└ T08 – Cadastro de cliente
+  POST http://127.0.0.1:8000/usuarios [201 Created, 232B, 64ms]
+  √  Resposta sem dados sensíveis
+  √  T08 cadastra cliente sem devolver a senha
+
+└ Prep – Login do cliente novo
+  POST http://127.0.0.1:8000/auth/login [200 OK, 508B, 65ms]
+  √  Resposta sem dados sensíveis
+  √  Cliente novo entra
+
+└ T12 – Ver o próprio perfil
+  GET http://127.0.0.1:8000/usuarios/me [200 OK, 337B, 13ms]
+  √  Resposta sem dados sensíveis
+  √  T12 devolve o perfil sem senha
+
+└ T14 – Admin cadastra atendente
+  POST http://127.0.0.1:8000/usuarios/funcionarios [201 Created, 252B, 64ms]
+  √  Resposta sem dados sensíveis
+  √  T14 cadastra atendente na unidade 1
+
+└ T16 – Revogar consentimento
+  POST http://127.0.0.1:8000/usuarios/me/consentimentos [201 Created, 213B, 17ms]
+  √  Resposta sem dados sensíveis
+  √  T16 registra a revogação com data
+
+└ Prep – Cadastro de cliente para anonimizar
+  POST http://127.0.0.1:8000/usuarios [201 Created, 236B, 65ms]
+  √  Resposta sem dados sensíveis
+  √  Cria o cliente que será anonimizado
+
+└ Prep – Login do cliente a anonimizar
+  POST http://127.0.0.1:8000/auth/login [200 OK, 510B, 63ms]
+  √  Resposta sem dados sensíveis
+  √  Cliente a anonimizar entra
+
+└ T18 – Anonimizar conta
+  DELETE http://127.0.0.1:8000/usuarios/me [204 No Content, 113B, 55ms]
+  √  Resposta sem dados sensíveis
+  √  T18 anonimiza com 204
+  POST http://127.0.0.1:8000/auth/login [401 Unauthorized, 328B, 60ms]
+  √  T18 login posterior devolve 401
+
+□ Unidades
+└ T20 – Listar unidades paginado
+  GET http://127.0.0.1:8000/unidades?page=1&limit=10 [200 OK, 464B, 12ms]
+  √  Resposta sem dados sensíveis
+  √  T20 lista unidades com paginação
+
+└ T22 – Consultar unidade
+  GET http://127.0.0.1:8000/unidades/1 [200 OK, 257B, 8ms]
+  √  Resposta sem dados sensíveis
+  √  T22 devolve a unidade de Recife
+
+└ T24 – Admin cria unidade
+  POST http://127.0.0.1:8000/unidades [201 Created, 268B, 20ms]
+  √  Resposta sem dados sensíveis
+  √  T24 cria a unidade ativa
+
+└ T27 – Atualizar unidade
+  PUT http://127.0.0.1:8000/unidades/3 [200 OK, 270B, 18ms]
+  √  Resposta sem dados sensíveis
+  √  T27 atualiza o nome da unidade
+
+└ T29 – Cardápio da unidade
+  GET http://127.0.0.1:8000/unidades/1/cardapio?limit=100 [200 OK, 911B, 13ms]
+  √  Resposta sem dados sensíveis
+  √  T29 traz só os produtos ativos, ofertados e no período
+
+□ Produtos
+└ T31 – Listar produtos
+  GET http://127.0.0.1:8000/produtos?page=1&limit=10 [200 OK, 1.26kB, 19ms]
+  √  Resposta sem dados sensíveis
+  √  T31 lista produtos com paginação
+
+└ T33 – Consultar produto
+  GET http://127.0.0.1:8000/produtos/1 [200 OK, 257B, 10ms]
+  √  Resposta sem dados sensíveis
+  √  T33 devolve a tapioca
+
+└ T35 – Admin cria produto
+  POST http://127.0.0.1:8000/produtos [201 Created, 277B, 19ms]
+  √  Resposta sem dados sensíveis
+  √  T35 cria o produto ativo
+
+└ T38 – Atualizar produto
+  PUT http://127.0.0.1:8000/produtos/8 [200 OK, 272B, 20ms]
+  √  Resposta sem dados sensíveis
+  √  T38 atualiza o preço
+
+└ T40 – Desativar produto
+  DELETE http://127.0.0.1:8000/produtos/2 [204 No Content, 113B, 12ms]
+  √  Resposta sem dados sensíveis
+  √  T40 desativa com 204
+  GET http://127.0.0.1:8000/unidades/1/cardapio?limit=100 [200 OK, 783B, 10ms]
+  √  T40 produto some do cardápio
+
+□ Estoque
+└ T42 – Saldo de estoque da unidade
+  GET http://127.0.0.1:8000/estoque?unidadeId=1&limit=100 [200 OK, 601B, 14ms]
+  √  Resposta sem dados sensíveis
+  √  T42 devolve os saldos de Recife
+
+└ T44 – Entrada de estoque
+  POST http://127.0.0.1:8000/estoque/movimentacoes [201 Created, 200B, 25ms]
+  √  Resposta sem dados sensíveis
+  √  T44 soma 10 ao saldo
+
+└ T48 – Histórico de movimentações
+  GET http://127.0.0.1:8000/estoque/movimentacoes?unidadeId=1 [200 OK, 365B, 12ms]
+  √  Resposta sem dados sensíveis
+  √  T48 traz a entrada do T44 no topo
+
+□ Pedidos
+└ T50 – Criar pedido válido
+  POST http://127.0.0.1:8000/pedidos [201 Created, 422B, 34ms]
+  √  Resposta sem dados sensíveis
+  √  T50 cria o pedido aguardando pagamento com total calculado
+  GET http://127.0.0.1:8000/estoque?unidadeId=1&limit=100 [200 OK, 600B, 12ms]
+  √  T50 baixa a tapioca do estoque
+
+└ T60 – Consultar o próprio pedido
+  GET http://127.0.0.1:8000/pedidos/1 [200 OK, 543B, 17ms]
+  √  Resposta sem dados sensíveis
+  √  T60 devolve o pedido com itens e status
+
+└ T58 – Filtrar pedidos por canal
+  GET http://127.0.0.1:8000/pedidos?canalPedido=TOTEM&limit=100 [200 OK, 377B, 13ms]
+  √  Resposta sem dados sensíveis
+  √  T58 lista só pedidos TOTEM, incluindo o do T50
+
+└ T94 – Atendente cria pedido no balcão sem cliente
+  POST http://127.0.0.1:8000/pedidos [201 Created, 372B, 26ms]
+  √  Resposta sem dados sensíveis
+  √  T94 cria pedido de balcão sem cliente
+
+└ Prep – Saldo da tapioca antes do cancelamento
+  GET http://127.0.0.1:8000/estoque?unidadeId=1&limit=100 [200 OK, 600B, 12ms]
+  √  Resposta sem dados sensíveis
+  √  Guarda o saldo da tapioca
+
+└ Prep – Pedido para cancelar
+  POST http://127.0.0.1:8000/pedidos [201 Created, 366B, 26ms]
+  √  Resposta sem dados sensíveis
+  √  Cria o pedido que será cancelado
+
+└ T66 – Cancelar pedido aguardando pagamento
+  POST http://127.0.0.1:8000/pedidos/3/cancelamento [200 OK, 228B, 28ms]
+  √  Resposta sem dados sensíveis
+  √  T66 cancela sem estorno de pagamento
+  GET http://127.0.0.1:8000/estoque?unidadeId=1&limit=100 [200 OK, 600B, 13ms]
+  √  T66 devolve a tapioca ao estoque
+
+└ Prep – Pedido para o preparo
+  POST http://127.0.0.1:8000/pedidos [201 Created, 366B, 27ms]
+  √  Resposta sem dados sensíveis
+  √  Cria o pedido que vai para a cozinha
+
+└ Prep – Pagamento do pedido para o preparo
+  POST http://127.0.0.1:8000/pagamentos [201 Created, 485B, 26ms]
+  √  Resposta sem dados sensíveis
+  √  Pagamento aprovado leva o pedido ao preparo
+
+└ T63 – Cozinha marca pedido como pronto
+  PATCH http://127.0.0.1:8000/pedidos/4/status [200 OK, 222B, 19ms]
+  √  Resposta sem dados sensíveis
+  √  T63 marca o pedido como pronto
+
+└ Prep – Atendente entrega o pedido
+  PATCH http://127.0.0.1:8000/pedidos/4/status [200 OK, 220B, 19ms]
+  √  Resposta sem dados sensíveis
+  √  Atendente entrega o pedido pronto
+
+└ Prep – Saldo de pontos antes do estorno
+  GET http://127.0.0.1:8000/fidelidade/saldo [200 OK, 166B, 12ms]
+  √  Resposta sem dados sensíveis
+  √  Guarda o saldo de pontos
+
+└ Prep – Saldo do café da manhã antes do estorno
+  GET http://127.0.0.1:8000/estoque?unidadeId=1&limit=100 [200 OK, 600B, 13ms]
+  √  Resposta sem dados sensíveis
+  √  Guarda o saldo do café da manhã completo
+
+└ Prep – Pedido pago para estornar
+  POST http://127.0.0.1:8000/pedidos [201 Created, 366B, 26ms]
+  √  Resposta sem dados sensíveis
+  √  Cria o pedido que será estornado
+
+└ Prep – Pagamento do pedido para estornar
+  POST http://127.0.0.1:8000/pagamentos [201 Created, 485B, 24ms]
+  √  Resposta sem dados sensíveis
+  √  Paga o pedido que será estornado
+
+└ T92 – Gerente cancela pedido pago (em preparo)
+  POST http://127.0.0.1:8000/pedidos/5/cancelamento [200 OK, 231B, 31ms]
+  √  Resposta sem dados sensíveis
+  √  T92 cancela com estorno do pagamento
+  GET http://127.0.0.1:8000/pagamentos/2   GET http://127.0.0.1:8000/fidelidade/saldo   GET http://127.0.0.1:8000/estoque?unidadeId=1&limit=100 [200 OK, 503B, 14ms]
+  √  T92 pagamento fica ESTORNADO
+[200 OK, 166B, 24ms]
+  √  T92 saldo de pontos volta ao valor anterior
+[200 OK, 600B, 26ms]
+  √  T92 estoque do café da manhã é restaurado
+
+□ Pagamento
+└ T68 – Pagamento mock aprovado
+  POST http://127.0.0.1:8000/pagamentos [201 Created, 487B, 25ms]
+  √  Resposta sem dados sensíveis
+  √  T68 aprova e leva o pedido ao preparo
+
+└ T73 – Consultar pagamento
+  GET http://127.0.0.1:8000/pagamentos/3 [200 OK, 504B, 11ms]
+  √  Resposta sem dados sensíveis
+  √  T73 devolve o pagamento aprovado
+
+└ Prep – Pedido para recusa e nova tentativa
+  POST http://127.0.0.1:8000/pedidos [201 Created, 366B, 27ms]
+  √  Resposta sem dados sensíveis
+  √  Cria o pedido da recusa
+
+└ Prep – Saldo de pontos antes da recusa
+  GET http://127.0.0.1:8000/fidelidade/saldo [200 OK, 167B, 10ms]
+  √  Resposta sem dados sensíveis
+  √  Guarda o saldo de pontos
+
+└ Prep – Primeira tentativa recusada
+  POST http://127.0.0.1:8000/pagamentos [201 Created, 616B, 23ms]
+  √  Resposta sem dados sensíveis
+  √  Primeira tentativa é recusada
+
+└ T90 – Recusa não pontua e permite nova tentativa
+  POST http://127.0.0.1:8000/pagamentos [201 Created, 485B, 27ms]
+  √  Resposta sem dados sensíveis
+  √  T90 segunda tentativa é aprovada
+  GET http://127.0.0.1:8000/fidelidade/saldo [200 OK, 167B, 9ms]
+  √  T90 só a aprovação pontua (18 pontos da tapioca)
+
+□ Fidelidade
+└ Prep – Saldo de pontos antes do acúmulo
+  GET http://127.0.0.1:8000/fidelidade/saldo [200 OK, 167B, 10ms]
+  √  Resposta sem dados sensíveis
+  √  Guarda o saldo de pontos
+
+└ Prep – Pedido para acumular pontos
+  POST http://127.0.0.1:8000/pedidos [201 Created, 366B, 27ms]
+  √  Resposta sem dados sensíveis
+  √  Cria o pedido do acúmulo
+
+└ Prep – Pagamento do pedido para acumular pontos
+  POST http://127.0.0.1:8000/pagamentos [201 Created, 485B, 26ms]
+  √  Resposta sem dados sensíveis
+  √  Paga o pedido do acúmulo
+
+└ T75 – Saldo de pontos após aprovação
+  GET http://127.0.0.1:8000/fidelidade/saldo [200 OK, 168B, 10ms]
+  √  Resposta sem dados sensíveis
+  √  T75 soma floor(49,90) = 49 pontos
+
+└ T77 – Histórico de pontos
+  GET http://127.0.0.1:8000/fidelidade/historico?page=1&limit=10 [200 OK, 770B, 13ms]
+  √  Resposta sem dados sensíveis
+  √  T77 lista as transações com o acúmulo mais recente
+
+└ Prep – Pedido para resgate
+  POST http://127.0.0.1:8000/pedidos [201 Created, 366B, 27ms]
+  √  Resposta sem dados sensíveis
+  √  Cria o pedido do resgate
+
+└ T79 – Resgate válido
+  POST http://127.0.0.1:8000/fidelidade/resgates [201 Created, 223B, 27ms]
+  √  Resposta sem dados sensíveis
+  √  T79 aplica R$ 5,00 de desconto
+
+└ T95 – Cancelar pedido com resgate aplicado
+  POST http://127.0.0.1:8000/pedidos/8/cancelamento [200 OK, 228B, 30ms]
+  √  Resposta sem dados sensíveis
+  √  T95 cancela o pedido com resgate
+  GET http://127.0.0.1:8000/fidelidade/saldo [200 OK, 168B, 10ms]
+  √  T95 devolve os pontos resgatados
+
+□ Auditoria
+└ T82 – Auditoria registra criação e mudança de status
+  GET http://127.0.0.1:8000/auditoria?entidade=Pedido&entidadeId=4&limit=100 [200 OK, 1.35kB, 13ms]
+  √  Resposta sem dados sensíveis
+  √  T82 traz criação e mudanças de status com autor e data
+
+└ Prep – Gerente consulta o pedido do cliente
+  GET http://127.0.0.1:8000/pedidos/1 [200 OK, 615B, 15ms]
+  √  Resposta sem dados sensíveis
+  √  Gerente vê o pedido com o cliente
+
+└ T84 – Acesso a dados pessoais é logado
+  GET http://127.0.0.1:8000/auditoria?acao=ACESSO_DADOS_PESSOAIS&entidade=Usuario&limit=100 [200 OK, 440B, 13ms]
+  √  Resposta sem dados sensíveis
+  √  T84 registra o acesso sem nome nem e-mail
+
+└ T85 – Relatório de vendas por canal
+  GET http://127.0.0.1:8000/relatorios/vendas?agrupamento=canal [200 OK, 396B, 13ms]
+  √  Resposta sem dados sensíveis
+  √  T85 agrupa as vendas por canal
+
+□ Erros
+└ T02 – Login com senha errada
+  POST http://127.0.0.1:8000/auth/login [401 Unauthorized, 328B, 60ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T02 devolve 401 CREDENCIAIS_INVALIDAS
+
+└ T03 – Login sem e-mail
+  POST http://127.0.0.1:8000/auth/login [422 Unprocessable Content, 379B, 13ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T03 devolve 422 apontando o e-mail
+
+└ T05 – Refresh inválido
+  POST http://127.0.0.1:8000/auth/refresh [401 Unauthorized, 333B, 15ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T05 devolve 401 NAO_AUTENTICADO
+
+└ T07 – Token usado após logout
+  GET http://127.0.0.1:8000/usuarios/me [401 Unauthorized, 337B, 8ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T07 token revogado devolve 401
+
+└ T09 – Cadastro com e-mail inválido
+  POST http://127.0.0.1:8000/usuarios [422 Unprocessable Content, 385B, 12ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T09 devolve 422 apontando o e-mail
+
+└ T10 – Cadastro sem senha
+  POST http://127.0.0.1:8000/usuarios [422 Unprocessable Content, 377B, 12ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T10 devolve 422 apontando a senha
+
+└ T11 – Cadastro com e-mail duplicado
+  POST http://127.0.0.1:8000/usuarios [409 Conflict, 357B, 59ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T11 devolve 409 EMAIL_JA_CADASTRADO
+
+└ T13 – Perfil sem token
+  GET http://127.0.0.1:8000/usuarios/me [401 Unauthorized, 320B, 5ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T13 devolve 401 NAO_AUTENTICADO
+
+└ T15 – Cliente tenta cadastrar funcionário
+  POST http://127.0.0.1:8000/usuarios/funcionarios [403 Forbidden, 352B, 15ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T15 devolve 403 ACESSO_NEGADO
+
+└ T17 – Consentimento com finalidade inválida
+  POST http://127.0.0.1:8000/usuarios/me/consentimentos [422 Unprocessable Content, 437B, 15ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T17 devolve 422 apontando a finalidade
+
+└ T19 – Anonimizar sem token
+  DELETE http://127.0.0.1:8000/usuarios/me [401 Unauthorized, 320B, 5ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T19 devolve 401 NAO_AUTENTICADO
+
+└ T21 – Listar unidades com limit inválido
+  GET http://127.0.0.1:8000/unidades?limit=0 [422 Unprocessable Content, 386B, 5ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T21 devolve 422 apontando o limit
+
+└ T23 – Unidade inexistente
+  GET http://127.0.0.1:8000/unidades/9999 [404 Not Found, 331B, 7ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T23 devolve 404 RECURSO_NAO_ENCONTRADO
+
+└ T25 – Gerente tenta criar unidade
+  POST http://127.0.0.1:8000/unidades [403 Forbidden, 339B, 15ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T25 devolve 403 ACESSO_NEGADO
+
+└ T26 – Criar unidade sem nome
+  POST http://127.0.0.1:8000/unidades [422 Unprocessable Content, 376B, 15ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T26 devolve 422 apontando o nome
+
+└ T28 – Atualizar unidade inexistente
+  PUT http://127.0.0.1:8000/unidades/9999 [404 Not Found, 331B, 18ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T28 devolve 404 RECURSO_NAO_ENCONTRADO
+
+└ T30 – Cardápio de unidade inexistente
+  GET http://127.0.0.1:8000/unidades/9999/cardapio [404 Not Found, 340B, 8ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T30 devolve 404 RECURSO_NAO_ENCONTRADO
+
+└ T32 – Listar produtos com page inválido
+  GET http://127.0.0.1:8000/produtos?page=-1 [422 Unprocessable Content, 385B, 9ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T32 devolve 422 apontando o page
+
+└ T34 – Produto inexistente
+  GET http://127.0.0.1:8000/produtos/9999 [404 Not Found, 331B, 10ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T34 devolve 404 RECURSO_NAO_ENCONTRADO
+
+└ T36 – Cozinha tenta criar produto
+  POST http://127.0.0.1:8000/produtos [403 Forbidden, 339B, 15ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T36 devolve 403 ACESSO_NEGADO
+
+└ T37 – Produto com preço negativo
+  POST http://127.0.0.1:8000/produtos [422 Unprocessable Content, 379B, 15ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T37 devolve 422 apontando o preço
+
+└ T39 – Atualizar produto inexistente
+  PUT http://127.0.0.1:8000/produtos/9999 [404 Not Found, 331B, 16ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T39 devolve 404 RECURSO_NAO_ENCONTRADO
+
+└ T41 – Desativar produto inexistente
+  DELETE http://127.0.0.1:8000/produtos/9999 [404 Not Found, 331B, 9ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T41 devolve 404 RECURSO_NAO_ENCONTRADO
+
+└ T43 – Estoque sem unidadeId
+  GET http://127.0.0.1:8000/estoque [422 Unprocessable Content, 380B, 8ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T43 devolve 422 apontando o unidadeId
+
+└ T45 – Saída maior que o saldo
+  POST http://127.0.0.1:8000/estoque/movimentacoes [409 Conflict, 388B, 19ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T45 devolve 409 com o saldo disponível do bolo
+
+└ T46 – Movimentação com quantidade negativa
+  POST http://127.0.0.1:8000/estoque/movimentacoes [422 Unprocessable Content, 397B, 15ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T46 devolve 422 apontando a quantidade
+
+└ T47 – Gerente movimenta outra unidade
+  POST http://127.0.0.1:8000/estoque/movimentacoes [403 Forbidden, 334B, 16ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T47 devolve 403 ACESSO_NEGADO
+
+└ T49 – Histórico sem token
+  GET http://127.0.0.1:8000/estoque/movimentacoes?unidadeId=1 [401 Unauthorized, 330B, 5ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T49 devolve 401 NAO_AUTENTICADO
+
+└ T51 – Pedido sem canalPedido
+  POST http://127.0.0.1:8000/pedidos [422 Unprocessable Content, 382B, 15ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T51 devolve 422 apontando o canalPedido
+
+└ T52 – Pedido com canalPedido inválido
+  POST http://127.0.0.1:8000/pedidos [422 Unprocessable Content, 435B, 14ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T52 devolve 422 apontando o canalPedido
+
+└ T53 – Pedido com quantidade negativa
+  POST http://127.0.0.1:8000/pedidos [422 Unprocessable Content, 392B, 15ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T53 devolve 422 apontando a quantidade do item
+
+└ T54 – Pedido com produto inexistente
+  POST http://127.0.0.1:8000/pedidos [404 Not Found, 325B, 21ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T54 devolve 404 RECURSO_NAO_ENCONTRADO
+
+└ T55 – Pedido com unidade inexistente
+  POST http://127.0.0.1:8000/pedidos [404 Not Found, 325B, 16ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T55 devolve 404 RECURSO_NAO_ENCONTRADO
+
+└ T56 – Pedido com estoque insuficiente
+  POST http://127.0.0.1:8000/pedidos [409 Conflict, 402B, 21ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T56 devolve 409 com o disponível do item
+
+└ T57 – Listar pedidos sem token
+  GET http://127.0.0.1:8000/pedidos [401 Unauthorized, 316B, 6ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T57 devolve 401 no formato padrão
+
+└ T59 – Filtro com canal inválido
+  GET http://127.0.0.1:8000/pedidos?canalPedido=XPTO [422 Unprocessable Content, 435B, 9ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T59 devolve 422 apontando o canalPedido
+
+└ T61 – Pedido inexistente
+  GET http://127.0.0.1:8000/pedidos/9999 [404 Not Found, 329B, 9ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T61 devolve 404 RECURSO_NAO_ENCONTRADO
+
+└ T62 – Cliente consulta pedido de outro cliente
+  GET http://127.0.0.1:8000/pedidos/1 [404 Not Found, 323B, 9ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T62 responde 404 sem revelar o pedido
+
+└ T64 – Transição inválida
+  PATCH http://127.0.0.1:8000/pedidos/2/status [409 Conflict, 369B, 17ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T64 devolve 409 TRANSICAO_STATUS_INVALIDA
+
+└ T65 – Cliente tenta mudar status
+  PATCH http://127.0.0.1:8000/pedidos/1/status [403 Forbidden, 347B, 15ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T65 devolve 403 ACESSO_NEGADO
+
+└ T67 – Cancelar pedido entregue
+  POST http://127.0.0.1:8000/pedidos/4/cancelamento [409 Conflict, 364B, 18ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T67 devolve 409 TRANSICAO_STATUS_INVALIDA
+
+└ T69 – Pagamento mock recusado
+  POST http://127.0.0.1:8000/pagamentos [201 Created, 616B, 21ms]
+  √  Resposta sem dados sensíveis
+  √  T69 registra a recusa com mensagem e mantém o pedido
+
+└ T70 – Pagar pedido já pago
+  POST http://127.0.0.1:8000/pagamentos [409 Conflict, 361B, 17ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T70 devolve 409 PAGAMENTO_NAO_PERMITIDO
+
+└ T71 – Pagar pedido inexistente
+  POST http://127.0.0.1:8000/pagamentos [404 Not Found, 327B, 16ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T71 devolve 404 RECURSO_NAO_ENCONTRADO
+
+└ T72 – Gateway indisponível
+  POST http://127.0.0.1:8000/pagamentos [503 Service Unavailable, 385B, 22ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T72 devolve 503 GATEWAY_PAGAMENTO_INDISPONIVEL
+  GET http://127.0.0.1:8000/pedidos/2 [200 OK, 543B, 11ms]
+  √  T72 pedido continua aguardando pagamento
+
+└ T74 – Pagamento inexistente
+  GET http://127.0.0.1:8000/pagamentos/9999 [404 Not Found, 335B, 10ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T74 devolve 404 RECURSO_NAO_ENCONTRADO
+
+└ T76 – Atendente consulta saldo de pontos
+  GET http://127.0.0.1:8000/fidelidade/saldo [403 Forbidden, 349B, 8ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T76 devolve 403 ACESSO_NEGADO
+
+└ T78 – Histórico sem token
+  GET http://127.0.0.1:8000/fidelidade/historico [401 Unauthorized, 329B, 5ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T78 devolve 401 NAO_AUTENTICADO
+
+└ Prep – Pedido do cliente sem consentimento
+  POST http://127.0.0.1:8000/pedidos [201 Created, 366B, 26ms]
+  √  Resposta sem dados sensíveis
+  √  Cria o pedido do cliente sem consentimento
+
+└ T80 – Resgate sem consentimento
+  POST http://127.0.0.1:8000/fidelidade/resgates [409 Conflict, 351B, 18ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T80 devolve 409 CONSENTIMENTO_AUSENTE
+
+└ Prep – Pedido aguardando do cliente
+  POST http://127.0.0.1:8000/pedidos [201 Created, 367B, 26ms]
+  √  Resposta sem dados sensíveis
+  √  Cria um pedido aguardando pagamento
+
+└ T81 – Resgate com saldo insuficiente
+  POST http://127.0.0.1:8000/fidelidade/resgates [409 Conflict, 412B, 21ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T81 devolve 409 SALDO_PONTOS_INSUFICIENTE
+
+└ T83 – Cliente tenta ler auditoria
+  GET http://127.0.0.1:8000/auditoria [403 Forbidden, 340B, 8ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T83 devolve 403 ACESSO_NEGADO
+
+└ T86 – Cliente tenta ver relatório
+  GET http://127.0.0.1:8000/relatorios/vendas?agrupamento=canal [403 Forbidden, 348B, 9ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T86 devolve 403 ACESSO_NEGADO
+
+└ T88 – Produto não oferecido na unidade
+  POST http://127.0.0.1:8000/pedidos [409 Conflict, 406B, 21ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T88 devolve 409 PRODUTO_INDISPONIVEL_NA_UNIDADE
+
+└ T89 – Body com total/status enviados pelo cliente
+  POST http://127.0.0.1:8000/pedidos [422 Unprocessable Content, 428B, 15ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T89 recusa total e status enviados pelo cliente
+
+└ T91 – Produto sazonal fora do período
+  POST http://127.0.0.1:8000/pedidos [409 Conflict, 406B, 20ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T91 canjica junina fora de 2026-06-01..2026-07-31 devolve 409
+
+└ T93 – Cliente cria pedido com canal de balcão
+  POST http://127.0.0.1:8000/pedidos [422 Unprocessable Content, 413B, 16ms]
+  √  Erro no formato padrão
+  √  Resposta sem dados sensíveis
+  √  T93 devolve 422 apontando o canalPedido
+
+┌─────────────────────────┬───────────────────┬──────────────────┐
+│                         │          executed │           failed │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              iterations │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│                requests │               133 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│            test-scripts │               246 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│      prerequest-scripts │               123 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              assertions │               311 │                0 │
+├─────────────────────────┴───────────────────┴──────────────────┤
+│ total run duration: 13.5s                                      │
+├────────────────────────────────────────────────────────────────┤
+│ total data received: 35.57kB (approx)                          │
+├────────────────────────────────────────────────────────────────┤
+│ average response time: 21ms [min: 5ms, max: 105ms, s.d.: 17ms] │
+└────────────────────────────────────────────────────────────────┘

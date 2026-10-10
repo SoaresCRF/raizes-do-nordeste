@@ -26,6 +26,7 @@ CLIENTE = UsuarioAutenticado(id=1, perfil=Perfil.CLIENTE, unidade_id=None, sessa
 COZINHA = UsuarioAutenticado(id=1, perfil=Perfil.COZINHA, unidade_id=UNIDADE_RECIFE, sessao_id=1)
 # A outra transação segura o lock até o fim do teste: sem limite, a espera não acabaria.
 ESPERA_MAXIMA_PELO_LOCK = "200ms"
+TIMEOUT_GATEWAY_SEGUNDOS = 3.0
 
 
 def test_pedido_espera_o_lock_do_estoque(banco_semeado):
@@ -82,7 +83,7 @@ def test_mudanca_de_status_espera_o_lock_do_pedido(banco_semeado):
 
 def test_pagamento_espera_o_lock_do_pedido(banco_semeado):
     pedido_id = _novo_pedido(banco_semeado)
-    gateway = GatewayPagamentoMock(ResultadoSimulado.APROVADO)
+    gateway = GatewayPagamentoMock(ResultadoSimulado.APROVADO, TIMEOUT_GATEWAY_SEGUNDOS)
     with banco_semeado.connect() as primeira, banco_semeado.connect() as segunda:
         primeira.begin()
         primeira.execute(select(pedido).where(pedido.c.id == pedido_id).with_for_update())

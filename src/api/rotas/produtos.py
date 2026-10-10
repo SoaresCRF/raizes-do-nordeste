@@ -1,11 +1,12 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 from pydantic import StringConstraints
 
 from src.api.autenticacao import AdminLogado, exigir_perfil
 from src.api.dependencias import ConexaoBanco
+from src.api.openapi import produtos as documentacao
 from src.api.schemas.campos import TAMANHO_MAXIMO_NOME, IdDoRecurso, SemCaractereNulo
 from src.api.schemas.paginacao import Pagina, ParametrosPaginacao, obter_paginacao
 from src.api.schemas.produtos import AlteracaoProduto, NovoProduto, ProdutoResposta
@@ -22,7 +23,7 @@ from src.domain.usuario.usuario import Perfil
 roteador = APIRouter(prefix="/produtos", tags=["Produtos"])
 
 
-@roteador.get("")
+@roteador.get("", **documentacao.LISTAR_PRODUTOS)
 def listar_produtos_da_rede(
     paginacao: Annotated[ParametrosPaginacao, Depends(obter_paginacao)],
     conexao: ConexaoBanco,
@@ -41,7 +42,7 @@ def listar_produtos_da_rede(
     )
 
 
-@roteador.get("/{id}")
+@roteador.get("/{id}", **documentacao.CONSULTAR_PRODUTO)
 def consultar_produto_por_id(produto_id: IdDoRecurso, conexao: ConexaoBanco) -> ProdutoResposta:
     return ProdutoResposta.model_validate(
         consultar_produto(conexao, produto_id), from_attributes=True
@@ -49,9 +50,15 @@ def consultar_produto_por_id(produto_id: IdDoRecurso, conexao: ConexaoBanco) -> 
 
 
 @roteador.post(
-    "", status_code=HTTPStatus.CREATED, dependencies=[Depends(exigir_perfil(Perfil.ADMIN))]
+    "",
+    status_code=HTTPStatus.CREATED,
+    dependencies=[Depends(exigir_perfil(Perfil.ADMIN))],
+    **documentacao.CADASTRAR_PRODUTO,
 )
-def cadastrar_novo_produto(novo: NovoProduto, conexao: ConexaoBanco) -> ProdutoResposta:
+def cadastrar_novo_produto(
+    novo: Annotated[NovoProduto, Body(openapi_examples=documentacao.EXEMPLOS_CADASTRAR_PRODUTO)],
+    conexao: ConexaoBanco,
+) -> ProdutoResposta:
     dados = DadosProduto(
         nome=novo.nome,
         descricao=novo.descricao,
@@ -62,10 +69,12 @@ def cadastrar_novo_produto(novo: NovoProduto, conexao: ConexaoBanco) -> ProdutoR
     return ProdutoResposta.model_validate(cadastrar_produto(conexao, dados), from_attributes=True)
 
 
-@roteador.put("/{id}")
+@roteador.put("/{id}", **documentacao.ATUALIZAR_PRODUTO)
 def atualizar_produto_existente(
     produto_id: IdDoRecurso,
-    alteracao: AlteracaoProduto,
+    alteracao: Annotated[
+        AlteracaoProduto, Body(openapi_examples=documentacao.EXEMPLOS_ATUALIZAR_PRODUTO)
+    ],
     admin: AdminLogado,
     conexao: ConexaoBanco,
 ) -> ProdutoResposta:
@@ -80,7 +89,7 @@ def atualizar_produto_existente(
     return ProdutoResposta.model_validate(produto, from_attributes=True)
 
 
-@roteador.delete("/{id}", status_code=HTTPStatus.NO_CONTENT)
+@roteador.delete("/{id}", status_code=HTTPStatus.NO_CONTENT, **documentacao.DESATIVAR_PRODUTO)
 def desativar_produto_existente(
     produto_id: IdDoRecurso, admin: AdminLogado, conexao: ConexaoBanco
 ) -> None:

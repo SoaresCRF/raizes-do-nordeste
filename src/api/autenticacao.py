@@ -10,10 +10,11 @@ from src.domain.erros.erros import AcessoNegado, NaoAutenticado
 from src.domain.usuario.usuario import Perfil, UsuarioAutenticado
 
 MENSAGEM_TOKEN_AUSENTE = "Token de acesso ausente"
+DESCRICAO_BEARER = "accessToken devolvido pelo POST /auth/login"
 
 # auto_error=False: sem o header, o HTTPBearer levantaria HTTPException, que o
 # tratador converte em 500; a ausência vira NaoAutenticado (401) aqui.
-esquema_bearer = HTTPBearer(auto_error=False)
+esquema_bearer = HTTPBearer(auto_error=False, bearerFormat="JWT", description=DESCRICAO_BEARER)
 
 
 def obter_usuario_autenticado(

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Query
 
 from src.api.autenticacao import GestorLogado
 from src.api.dependencias import ConexaoBanco
+from src.api.openapi import relatorios as documentacao
 from src.api.schemas.relatorios import LinhaRelatorioResposta, RelatorioVendasResposta
 from src.application.relatorios.relatorios import gerar_relatorio_de_vendas
 from src.domain.relatorio.relatorio import Agrupamento
@@ -12,7 +13,7 @@ from src.domain.relatorio.relatorio import Agrupamento
 roteador = APIRouter(prefix="/relatorios", tags=["Relatórios"])
 
 
-@roteador.get("/vendas")
+@roteador.get("/vendas", **documentacao.RELATORIO_DE_VENDAS)
 def gerar_relatorio_de_vendas_da_matriz(
     agrupamento: Annotated[Agrupamento, Query()],
     usuario: GestorLogado,

@@ -1,9 +1,11 @@
 from http import HTTPStatus
+from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 
 from src.api.autenticacao import ClienteLogado, UsuarioLogado, exigir_perfil
 from src.api.dependencias import ConexaoBanco, ServicoHashSenha
+from src.api.openapi import usuarios as documentacao
 from src.api.schemas.usuarios import (
     ConsentimentoRegistrado,
     FuncionarioCriado,
@@ -24,9 +26,11 @@ from src.domain.usuario.usuario import Perfil
 roteador = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 
-@roteador.post("", status_code=HTTPStatus.CREATED)
+@roteador.post("", status_code=HTTPStatus.CREATED, **documentacao.CADASTRAR_CLIENTE)
 def cadastrar_novo_cliente(
-    novo: NovoCliente, conexao: ConexaoBanco, hash_senha: ServicoHashSenha
+    novo: Annotated[NovoCliente, Body(openapi_examples=documentacao.EXEMPLOS_CADASTRAR_CLIENTE)],
+    conexao: ConexaoBanco,
+    hash_senha: ServicoHashSenha,
 ) -> UsuarioCriado:
     cliente = cadastrar_cliente(
         conexao, hash_senha, novo.nome, novo.email, novo.senha, novo.consentimento_fidelidade
@@ -34,7 +38,7 @@ def cadastrar_novo_cliente(
     return UsuarioCriado.model_validate(cliente, from_attributes=True)
 
 
-@roteador.get("/me")
+@roteador.get("/me", **documentacao.MINHA_CONTA)
 def consultar_minha_conta(usuario: UsuarioLogado, conexao: ConexaoBanco) -> MinhaConta:
     conta = consultar_conta(conexao, usuario.id)
     return MinhaConta(
@@ -50,9 +54,16 @@ def consultar_minha_conta(usuario: UsuarioLogado, conexao: ConexaoBanco) -> Minh
     )
 
 
-@roteador.post("/me/consentimentos", status_code=HTTPStatus.CREATED)
+@roteador.post(
+    "/me/consentimentos", status_code=HTTPStatus.CREATED, **documentacao.REGISTRAR_CONSENTIMENTO
+)
 def registrar_meu_consentimento(
-    novo: NovoConsentimento, cliente: ClienteLogado, conexao: ConexaoBanco
+    novo: Annotated[
+        NovoConsentimento,
+        Body(openapi_examples=documentacao.EXEMPLOS_REGISTRAR_CONSENTIMENTO),
+    ],
+    cliente: ClienteLogado,
+    conexao: ConexaoBanco,
 ) -> ConsentimentoRegistrado:
     registro = registrar_consentimento(
         conexao, cliente.id, novo.finalidade, novo.concedido, novo.versao_termo
@@ -60,7 +71,7 @@ def registrar_meu_consentimento(
     return ConsentimentoRegistrado.model_validate(registro, from_attributes=True)
 
 
-@roteador.delete("/me", status_code=HTTPStatus.NO_CONTENT)
+@roteador.delete("/me", status_code=HTTPStatus.NO_CONTENT, **documentacao.ANONIMIZAR_CONTA)
 def anonimizar_minha_conta(
     cliente: ClienteLogado, conexao: ConexaoBanco, hash_senha: ServicoHashSenha
 ) -> None:
@@ -71,9 +82,14 @@ def anonimizar_minha_conta(
     "/funcionarios",
     status_code=HTTPStatus.CREATED,
     dependencies=[Depends(exigir_perfil(Perfil.ADMIN))],
+    **documentacao.CADASTRAR_FUNCIONARIO,
 )
 def cadastrar_novo_funcionario(
-    novo: NovoFuncionario, conexao: ConexaoBanco, hash_senha: ServicoHashSenha
+    novo: Annotated[
+        NovoFuncionario, Body(openapi_examples=documentacao.EXEMPLOS_CADASTRAR_FUNCIONARIO)
+    ],
+    conexao: ConexaoBanco,
+    hash_senha: ServicoHashSenha,
 ) -> FuncionarioCriado:
     funcionario = cadastrar_funcionario(
         conexao, hash_senha, novo.nome, novo.email, novo.senha, novo.perfil, novo.unidade_id

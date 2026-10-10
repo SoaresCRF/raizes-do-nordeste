@@ -53,6 +53,7 @@ def conexao_teste(engine_teste):
 
 SENHA_CLIENTE_NOVO = "SenhaForte123"
 EMAIL_CLIENTE = f"cliente@{DOMINIO_EMAIL}"
+EMAIL_ADMIN = f"admin@{DOMINIO_EMAIL}"
 UNIDADE_DO_PEDIDO = 1
 # Tapioca: saldo 100 em Recife no seed, folga para os pedidos de um módulo de testes.
 PRODUTO_DO_PEDIDO = 1
@@ -118,6 +119,20 @@ def saldo_de_estoque(banco_semeado):
                     estoque.c.unidade_id == unidade_id, estoque.c.produto_id == produto_id
                 )
             ).scalar_one_or_none()
+
+    return consultar
+
+
+@pytest.fixture
+def saldo_pela_api(cliente_http, entrar):
+    # ADMIN consulta o E19 de qualquer unidade sem trocar de gerente.
+    def consultar(unidade_id: int, produto_id: int) -> int:
+        resposta = cliente_http.get(
+            f"/estoque?unidadeId={unidade_id}&limit=100", headers=entrar(EMAIL_ADMIN)
+        )
+        assert resposta.status_code == 200, resposta.text
+        saldos = {saldo["produtoId"]: saldo["quantidade"] for saldo in resposta.json()["dados"]}
+        return saldos[produto_id]
 
     return consultar
 

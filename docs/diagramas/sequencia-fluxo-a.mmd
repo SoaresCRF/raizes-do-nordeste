@@ -1,0 +1,57 @@
+sequenceDiagram
+    autonumber
+    actor C as Cliente / Atendente
+    participant API as API (rotas)
+    participant APP as Application (casos de uso)
+    participant DB as Banco (repositórios)
+    participant GW as GatewayPagamentoMock
+    C->>API: POST /pedidos {canalPedido, unidadeId, itens, formaPagamento}
+    API->>API: Autentica (JWT), autoriza o perfil (403) e valida o body (422)
+    API->>APP: criar_pedido
+    APP->>APP: Valida canal e itens (422), confere a unidade do funcionário (403)
+    APP->>DB: Busca a unidade (e o cliente, se informado)
+    alt unidade ou cliente inexistente
+        API-->>C: 404 RECURSO_NAO_ENCONTRADO
+    end
+    APP->>DB: Trava as linhas de estoque (FOR UPDATE)
+    APP->>DB: Busca os produtos e o cardápio da unidade
+    alt produto inexistente
+        API-->>C: 404 RECURSO_NAO_ENCONTRADO
+    end
+    alt produto fora do cardápio da unidade
+        API-->>C: 409 PRODUTO_INDISPONIVEL_NA_UNIDADE
+    end
+    alt saldo insuficiente
+        API-->>C: 409 ESTOQUE_INSUFICIENTE
+    end
+    APP->>DB: Cria pedido e itens, baixa o estoque (SAIDA), audita PEDIDO_CRIADO
+    API-->>C: 201 {pedidoId, status: AGUARDANDO_PAGAMENTO, total}
+    C->>API: POST /pagamentos {pedidoId} + X-Simular-Resultado
+    API->>APP: solicitar_pagamento
+    APP->>DB: Trava o pedido (FOR UPDATE)
+    alt pedido inexistente ou de outro cliente
+        API-->>C: 404 RECURSO_NAO_ENCONTRADO
+    end
+    alt pedido não está AGUARDANDO_PAGAMENTO
+        API-->>C: 409 PAGAMENTO_NAO_PERMITIDO
+    end
+    APP->>DB: Cria pagamento PENDENTE
+    APP->>GW: cobrar(referencia, valor)
+    alt aprovado
+        GW-->>APP: aprovado, transacaoExternaId
+        APP->>DB: Pagamento APROVADO, audita PAGAMENTO_REGISTRADO
+        APP->>DB: Pedido EM_PREPARO, audita STATUS_ALTERADO, credita pontos
+        API-->>C: 201 {status: APROVADO, statusPedido: EM_PREPARO}
+    else recusado
+        GW-->>APP: recusado, motivo
+        APP->>DB: Pagamento RECUSADO, audita PAGAMENTO_REGISTRADO
+        API-->>C: 201 {status: RECUSADO, statusPedido: AGUARDANDO_PAGAMENTO}
+    else falha ou timeout
+        GW-->>APP: FalhaGateway
+        APP->>DB: Pagamento ERRO, audita PAGAMENTO_REGISTRADO
+        API-->>C: 503 GATEWAY_PAGAMENTO_INDISPONIVEL
+    end
+    C->>API: PATCH /pedidos/{id}/status {status: PRONTO} (cozinha)
+    API->>APP: alterar_status
+    APP->>DB: Valida a transição, grava, audita STATUS_ALTERADO
+    API-->>C: 200 {status: PRONTO}

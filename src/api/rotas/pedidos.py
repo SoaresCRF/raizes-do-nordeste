@@ -1,10 +1,11 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 
 from src.api.autenticacao import FuncionarioLogado, UsuarioLogado, exigir_perfil
 from src.api.dependencias import ConexaoBanco, ServicoGatewayPagamento
+from src.api.openapi import pedidos as documentacao
 from src.api.schemas.campos import ID_MAXIMO, IdDoRecurso
 from src.api.schemas.paginacao import Pagina, ParametrosPaginacao, obter_paginacao
 from src.api.schemas.pedidos import (
@@ -79,9 +80,11 @@ def _ultimo_pagamento(pagamento: Pagamento | None) -> UltimoPagamentoResposta | 
     )
 
 
-@roteador.post("", status_code=HTTPStatus.CREATED)
+@roteador.post("", status_code=HTTPStatus.CREATED, **documentacao.CRIAR_PEDIDO)
 def criar_novo_pedido(
-    novo: NovoPedido, usuario: AutorDoPedido, conexao: ConexaoBanco
+    novo: Annotated[NovoPedido, Body(openapi_examples=documentacao.EXEMPLOS_CRIAR_PEDIDO)],
+    usuario: AutorDoPedido,
+    conexao: ConexaoBanco,
 ) -> PedidoCriadoResposta:
     dados = DadosPedido(
         canal_pedido=novo.canal_pedido,
@@ -94,13 +97,18 @@ def criar_novo_pedido(
     return PedidoCriadoResposta(**_campos_do_resumo(pedido), itens=_itens_resposta(itens))
 
 
-@roteador.get("")
+@roteador.get("", **documentacao.LISTAR_PEDIDOS)
 def listar_pedidos_acessiveis(
     paginacao: Annotated[ParametrosPaginacao, Depends(obter_paginacao)],
     usuario: UsuarioLogado,
     conexao: ConexaoBanco,
-    canal_pedido: Annotated[CanalPedido | None, Query(alias="canalPedido")] = None,
-    status: Annotated[StatusPedido | None, Query()] = None,
+    canal_pedido: Annotated[
+        CanalPedido | None,
+        Query(alias="canalPedido", openapi_examples=documentacao.EXEMPLOS_CANAL_PEDIDO),
+    ] = None,
+    status: Annotated[
+        StatusPedido | None, Query(openapi_examples=documentacao.EXEMPLOS_STATUS_PEDIDO)
+    ] = None,
     unidade_id: Annotated[int | None, Query(alias="unidadeId", gt=0, le=ID_MAXIMO)] = None,
 ) -> Pagina[PedidoResumoResposta]:
     filtros = FiltrosPedido(
@@ -114,7 +122,7 @@ def listar_pedidos_acessiveis(
     )
 
 
-@roteador.get("/{id}")
+@roteador.get("/{id}", **documentacao.CONSULTAR_PEDIDO)
 def consultar_pedido_por_id(
     pedido_id: IdDoRecurso, usuario: UsuarioLogado, conexao: ConexaoBanco
 ) -> PedidoDetalhadoResposta:
@@ -135,10 +143,12 @@ def consultar_pedido_por_id(
     )
 
 
-@roteador.patch("/{id}/status")
+@roteador.patch("/{id}/status", **documentacao.ALTERAR_STATUS)
 def alterar_status_do_pedido(
     pedido_id: IdDoRecurso,
-    alteracao: AlteracaoStatus,
+    alteracao: Annotated[
+        AlteracaoStatus, Body(openapi_examples=documentacao.EXEMPLOS_ALTERAR_STATUS)
+    ],
     usuario: FuncionarioLogado,
     conexao: ConexaoBanco,
 ) -> StatusAlteradoResposta:
@@ -151,10 +161,12 @@ def alterar_status_do_pedido(
     )
 
 
-@roteador.post("/{id}/cancelamento")
+@roteador.post("/{id}/cancelamento", **documentacao.CANCELAR_PEDIDO)
 def cancelar_pedido_existente(
     pedido_id: IdDoRecurso,
-    cancelamento: Cancelamento,
+    cancelamento: Annotated[
+        Cancelamento, Body(openapi_examples=documentacao.EXEMPLOS_CANCELAR_PEDIDO)
+    ],
     usuario: AutorDoCancelamento,
     gateway: ServicoGatewayPagamento,
     conexao: ConexaoBanco,

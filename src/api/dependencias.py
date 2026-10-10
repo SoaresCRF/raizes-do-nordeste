@@ -34,13 +34,22 @@ def obter_token_jwt(request: Request) -> TokenJwt:
 ServicoToken = Annotated[TokenJwt, Depends(obter_token_jwt)]
 
 
+DESCRICAO_SIMULAR_RESULTADO = (
+    "Só para o gateway simulado: escolhe o resultado do mock. Em `POST /pagamentos`: "
+    "`APROVADO` (padrão), `RECUSADO`, `ERRO` ou `TIMEOUT`. No cancelamento, `ERRO` e "
+    "`TIMEOUT` simulam falha no estorno; os outros valores estornam."
+)
+
+
 def obter_gateway_pagamento(
+    request: Request,
     resultado: Annotated[
-        ResultadoSimulado, Header(alias="X-Simular-Resultado")
+        ResultadoSimulado,
+        Header(alias="X-Simular-Resultado", description=DESCRICAO_SIMULAR_RESULTADO),
     ] = ResultadoSimulado.APROVADO,
 ) -> GatewayPagamento:
     # O header só existe porque o gateway é simulado (Q06): não chega ao caso de uso.
-    return GatewayPagamentoMock(resultado)
+    return GatewayPagamentoMock(resultado, request.app.state.gateway_timeout_segundos)
 
 
 ServicoGatewayPagamento = Annotated[GatewayPagamento, Depends(obter_gateway_pagamento)]

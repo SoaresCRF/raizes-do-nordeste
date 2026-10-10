@@ -1,10 +1,11 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 
 from src.api.autenticacao import FuncionarioLogado, GestorLogado
 from src.api.dependencias import ConexaoBanco
+from src.api.openapi import estoque as documentacao
 from src.api.schemas.campos import ID_MAXIMO
 from src.api.schemas.estoque import (
     MovimentacaoHistoricoResposta,
@@ -25,7 +26,7 @@ roteador = APIRouter(prefix="/estoque", tags=["Estoque"])
 UnidadeDoFiltro = Annotated[int, Query(alias="unidadeId", gt=0, le=ID_MAXIMO)]
 
 
-@roteador.get("")
+@roteador.get("", **documentacao.CONSULTAR_SALDOS)
 def consultar_saldos_da_unidade(
     unidade_id: UnidadeDoFiltro,
     paginacao: Annotated[ParametrosPaginacao, Depends(obter_paginacao)],
@@ -42,9 +43,13 @@ def consultar_saldos_da_unidade(
     )
 
 
-@roteador.post("/movimentacoes", status_code=HTTPStatus.CREATED)
+@roteador.post("/movimentacoes", status_code=HTTPStatus.CREATED, **documentacao.MOVIMENTAR_ESTOQUE)
 def movimentar_estoque_da_unidade(
-    nova: NovaMovimentacao, usuario: GestorLogado, conexao: ConexaoBanco
+    nova: Annotated[
+        NovaMovimentacao, Body(openapi_examples=documentacao.EXEMPLOS_MOVIMENTAR_ESTOQUE)
+    ],
+    usuario: GestorLogado,
+    conexao: ConexaoBanco,
 ) -> MovimentacaoResposta:
     dados = DadosMovimentacao(
         unidade_id=nova.unidade_id,
@@ -62,7 +67,7 @@ def movimentar_estoque_da_unidade(
     )
 
 
-@roteador.get("/movimentacoes")
+@roteador.get("/movimentacoes", **documentacao.LISTAR_MOVIMENTACOES)
 def listar_movimentacoes_da_unidade(
     unidade_id: UnidadeDoFiltro,
     paginacao: Annotated[ParametrosPaginacao, Depends(obter_paginacao)],

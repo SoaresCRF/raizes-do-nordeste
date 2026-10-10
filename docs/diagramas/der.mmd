@@ -1,0 +1,151 @@
+erDiagram
+    UNIDADE |o--o{ USUARIO : "lota funcionários"
+    UNIDADE ||--o{ ESTOQUE : "possui estoque próprio"
+    PRODUTO ||--o{ ESTOQUE : "estocado em"
+    ESTOQUE ||--o{ MOVIMENTACAO_ESTOQUE : registra
+    USUARIO ||--o{ MOVIMENTACAO_ESTOQUE : executa
+    PEDIDO |o--o{ MOVIMENTACAO_ESTOQUE : origina
+    USUARIO |o--o{ PEDIDO : "faz (cliente_id)"
+    USUARIO ||--o{ PEDIDO : "registra (criado_por_id)"
+    UNIDADE ||--o{ PEDIDO : recebe
+    PEDIDO ||--|{ ITEM_PEDIDO : contém
+    PRODUTO ||--o{ ITEM_PEDIDO : "vendido em"
+    PEDIDO ||--o{ PAGAMENTO : "tentativas (desacoplado)"
+    USUARIO ||--o{ CONSENTIMENTO : concede
+    USUARIO ||--o{ TRANSACAO_FIDELIDADE : acumula
+    PEDIDO ||--o{ TRANSACAO_FIDELIDADE : origina
+    USUARIO |o--o{ LOG_AUDITORIA : executa
+    UNIDADE |o--o{ LOG_AUDITORIA : "escopo de"
+    USUARIO ||--o{ SESSAO : abre
+
+    UNIDADE {
+        int id PK
+        varchar nome "120"
+        varchar cidade "80"
+        varchar uf "2"
+        varchar regiao "40"
+        varchar tipo "COZINHA_COMPLETA | FORMATO_REDUZIDO"
+        boolean ativa "default true"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    USUARIO {
+        int id PK
+        varchar nome "120"
+        varchar email UK "160"
+        text senha_hash "argon2"
+        varchar perfil "CLIENTE | ATENDENTE | COZINHA | GERENTE | ADMIN"
+        int unidade_id FK "NOT NULL se e somente se perfil ATENDENTE, COZINHA ou GERENTE"
+        boolean ativo "default true"
+        timestamptz anonimizado_em
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    PRODUTO {
+        int id PK
+        varchar nome "120"
+        text descricao
+        numeric preco "10,2 - CHECK > 0"
+        boolean ativo "default true"
+        date disponivel_de "CHECK de <= ate"
+        date disponivel_ate
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    ESTOQUE {
+        int id PK
+        int unidade_id FK "UNIQUE (unidade_id, produto_id)"
+        int produto_id FK
+        int quantidade "CHECK >= 0"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    MOVIMENTACAO_ESTOQUE {
+        int id PK
+        int estoque_id FK
+        varchar tipo "ENTRADA | SAIDA"
+        int quantidade "CHECK > 0"
+        varchar motivo "200"
+        int pedido_id FK "nulo em movimentação manual"
+        int usuario_id FK
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    PEDIDO {
+        int id PK
+        int cliente_id FK "nulo em pedido de balcão sem cliente"
+        int unidade_id FK
+        varchar canal_pedido "APP | TOTEM | BALCAO | PICKUP | WEB"
+        varchar status "AGUARDANDO_PAGAMENTO | EM_PREPARO | PRONTO | ENTREGUE | CANCELADO"
+        varchar forma_pagamento "MOCK"
+        numeric subtotal "10,2 - CHECK >= 0"
+        numeric desconto "10,2 - CHECK 0 <= desconto <= subtotal"
+        numeric total "10,2 - CHECK = subtotal - desconto"
+        int criado_por_id FK
+        varchar motivo_cancelamento "200"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    ITEM_PEDIDO {
+        int id PK
+        int pedido_id FK
+        int produto_id FK
+        int quantidade "CHECK > 0"
+        numeric preco_unitario "10,2 - preço da época, CHECK > 0"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    PAGAMENTO {
+        int id PK
+        int pedido_id FK
+        varchar status "PENDENTE | APROVADO | RECUSADO | ERRO | ESTORNADO"
+        numeric valor "10,2 - CHECK > 0"
+        varchar forma_pagamento "MOCK"
+        varchar transacao_externa_id "80"
+        varchar motivo_recusa "200"
+        jsonb payload_gateway
+        varchar chave_idempotencia UK "80, reservada"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    CONSENTIMENTO {
+        int id PK
+        int usuario_id FK
+        varchar finalidade "FIDELIDADE | MARKETING"
+        boolean concedido
+        varchar versao_termo "20"
+        timestamptz registrado_em
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    TRANSACAO_FIDELIDADE {
+        int id PK
+        int cliente_id FK
+        varchar tipo "ACUMULO | RESGATE | ESTORNO"
+        int pontos "CHECK <> 0, sinal conforme o tipo"
+        int pedido_id FK
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    LOG_AUDITORIA {
+        int id PK
+        int usuario_id FK
+        int unidade_id FK
+        varchar acao "60"
+        varchar entidade "40"
+        int entidade_id
+        jsonb dados_antes
+        jsonb dados_depois
+        varchar request_id "40"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    SESSAO {
+        int id PK
+        int usuario_id FK
+        varchar refresh_token_hash UK "64, SHA-256"
+        timestamptz expira_em
+        timestamptz revogada_em
+        timestamptz created_at
+        timestamptz updated_at
+    }

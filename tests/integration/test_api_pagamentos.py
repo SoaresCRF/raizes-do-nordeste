@@ -146,6 +146,21 @@ def test_nova_tentativa_depois_do_erro_do_gateway_e_aprovada(cliente_http, entra
     assert (resposta.status_code, resposta.json()["statusPedido"]) == (201, "EM_PREPARO")
 
 
+def test_timeout_do_gateway_devolve_503_e_registra_o_erro(
+    cliente_http, entrar, fazer_pedido, banco_semeado, caplog
+):
+    pedido_id = fazer_pedido()["pedidoId"]
+
+    resposta = _pagar(cliente_http, entrar(EMAIL_CLIENTE), pedido_id, "TIMEOUT")
+
+    assert resposta.status_code == 503
+    assert resposta.json()["error"] == "GATEWAY_PAGAMENTO_INDISPONIVEL"
+    [registrado] = _pagamentos_do_pedido(banco_semeado, pedido_id)
+    assert registrado.status == "ERRO"
+    assert _status_do_pedido(banco_semeado, pedido_id) == "AGUARDANDO_PAGAMENTO"
+    assert "Gateway simulado não respondeu em 3 s" in caplog.text
+
+
 def test_recusa_nao_pontua_e_permite_nova_tentativa(
     cliente_http, entrar, fazer_pedido, cliente_novo, banco_semeado
 ):
@@ -331,7 +346,7 @@ def test_header_de_simulacao_invalido_devolve_422(cliente_http, entrar, fazer_pe
     assert resposta.json()["details"] == [
         {
             "field": SIMULAR,
-            "issue": "Deve ser um destes valores: 'APROVADO', 'RECUSADO' ou 'ERRO'",
+            "issue": "Deve ser um destes valores: 'APROVADO', 'RECUSADO', 'ERRO' ou 'TIMEOUT'",
         }
     ]
 

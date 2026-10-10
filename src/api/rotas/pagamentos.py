@@ -1,12 +1,13 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Body, Depends, Request
 from fastapi.responses import JSONResponse
 
 from src.api.autenticacao import exigir_perfil
 from src.api.dependencias import ConexaoBanco, ServicoGatewayPagamento
 from src.api.erros import resposta_de_erro
+from src.api.openapi import pagamentos as documentacao
 from src.api.schemas.campos import IdDoRecurso
 from src.api.schemas.pagamentos import (
     PagamentoRegistradoResposta,
@@ -36,9 +37,16 @@ def _mensagem(pagamento: Pagamento) -> str:
     return f"Pagamento recusado ({pagamento.motivo_recusa}); o pedido continua aguardando pagamento"
 
 
-@roteador.post("", status_code=HTTPStatus.CREATED, response_model=PagamentoRegistradoResposta)
+@roteador.post(
+    "",
+    status_code=HTTPStatus.CREATED,
+    response_model=PagamentoRegistradoResposta,
+    **documentacao.SOLICITAR_PAGAMENTO,
+)
 def solicitar_pagamento_do_pedido(
-    solicitacao: SolicitacaoPagamento,
+    solicitacao: Annotated[
+        SolicitacaoPagamento, Body(openapi_examples=documentacao.EXEMPLOS_SOLICITAR_PAGAMENTO)
+    ],
     usuario: PagadorDoPedido,
     gateway: ServicoGatewayPagamento,
     conexao: ConexaoBanco,
@@ -66,7 +74,7 @@ def solicitar_pagamento_do_pedido(
     )
 
 
-@roteador.get("/{id}")
+@roteador.get("/{id}", **documentacao.CONSULTAR_PAGAMENTO)
 def consultar_pagamento_por_id(
     pagamento_id: IdDoRecurso, usuario: ConsultorDePagamento, conexao: ConexaoBanco
 ) -> PagamentoResposta:

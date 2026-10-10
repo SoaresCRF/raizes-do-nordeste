@@ -11,10 +11,15 @@ from src.infrastructure.pagamento.gateway_mock import (
 
 REFERENCIA = 42
 VALOR = Decimal("18.90")
+TIMEOUT_SEGUNDOS = 3.0
+
+
+def _gateway(resultado: ResultadoSimulado) -> GatewayPagamentoMock:
+    return GatewayPagamentoMock(resultado, TIMEOUT_SEGUNDOS)
 
 
 def test_mock_aprova_com_transacao_e_payload():
-    resposta = GatewayPagamentoMock(ResultadoSimulado.APROVADO).cobrar(REFERENCIA, VALOR)
+    resposta = _gateway(ResultadoSimulado.APROVADO).cobrar(REFERENCIA, VALOR)
 
     assert resposta.aprovado
     assert resposta.motivo_recusa is None
@@ -29,7 +34,7 @@ def test_mock_aprova_com_transacao_e_payload():
 
 
 def test_mock_recusa_com_motivo():
-    resposta = GatewayPagamentoMock(ResultadoSimulado.RECUSADO).cobrar(REFERENCIA, VALOR)
+    resposta = _gateway(ResultadoSimulado.RECUSADO).cobrar(REFERENCIA, VALOR)
 
     assert not resposta.aprovado
     assert resposta.motivo_recusa == MOTIVO_RECUSA_SIMULADA
@@ -41,11 +46,16 @@ def test_mock_recusa_com_motivo():
 
 def test_mock_em_erro_levanta_falha_do_gateway():
     with pytest.raises(FalhaGateway):
-        GatewayPagamentoMock(ResultadoSimulado.ERRO).cobrar(REFERENCIA, VALOR)
+        _gateway(ResultadoSimulado.ERRO).cobrar(REFERENCIA, VALOR)
+
+
+def test_mock_em_timeout_levanta_falha_com_o_prazo_configurado():
+    with pytest.raises(FalhaGateway, match="não respondeu em 3 s"):
+        _gateway(ResultadoSimulado.TIMEOUT).cobrar(REFERENCIA, VALOR)
 
 
 def test_cada_cobranca_gera_uma_transacao_diferente():
-    gateway = GatewayPagamentoMock(ResultadoSimulado.APROVADO)
+    gateway = _gateway(ResultadoSimulado.APROVADO)
 
     primeira = gateway.cobrar(1, VALOR)
     segunda = gateway.cobrar(2, VALOR)
@@ -55,9 +65,14 @@ def test_cada_cobranca_gera_uma_transacao_diferente():
 
 @pytest.mark.parametrize("resultado", [ResultadoSimulado.APROVADO, ResultadoSimulado.RECUSADO])
 def test_mock_estorna_sem_erro(resultado):
-    GatewayPagamentoMock(resultado).estornar("MOCK-abc", VALOR)
+    _gateway(resultado).estornar("MOCK-abc", VALOR)
 
 
 def test_mock_em_erro_nao_estorna():
     with pytest.raises(FalhaGateway):
-        GatewayPagamentoMock(ResultadoSimulado.ERRO).estornar("MOCK-abc", VALOR)
+        _gateway(ResultadoSimulado.ERRO).estornar("MOCK-abc", VALOR)
+
+
+def test_mock_em_timeout_nao_estorna():
+    with pytest.raises(FalhaGateway, match="não respondeu em 3 s"):
+        _gateway(ResultadoSimulado.TIMEOUT).estornar("MOCK-abc", VALOR)

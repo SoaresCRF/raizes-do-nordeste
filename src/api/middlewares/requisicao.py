@@ -14,8 +14,6 @@ logger = logging.getLogger(__name__)
 
 def _registrar_erro_inesperado(scope: Scope, erro: Exception) -> None:
     if isinstance(erro, DBAPIError):
-        # O DETAIL do Postgres repete valores da linha (e-mail, nome): sem a mensagem nem o
-        # traceback, só o tipo e o SQLSTATE vão para o log (RNF07).
         logger.error(
             "Erro de banco em %s %s",
             scope["method"],
@@ -30,8 +28,6 @@ def _registrar_erro_inesperado(scope: Scope, erro: Exception) -> None:
 
 
 class MiddlewareRequisicao:
-    """Gera o requestId, registra o acesso e converte erro inesperado em 500 padronizado."""
-
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
 
@@ -63,7 +59,6 @@ class MiddlewareRequisicao:
             )
             await resposta(scope, receive, send)
         finally:
-            # Só o caminho: a query string pode trazer dado pessoal (RNF07).
             logger.info(
                 "Requisição concluída",
                 extra={

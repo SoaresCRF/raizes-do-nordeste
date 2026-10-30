@@ -6,8 +6,6 @@ from datetime import UTC, datetime
 
 request_id_atual: ContextVar[str | None] = ContextVar("request_id_atual", default=None)
 
-# Tudo que um LogRecord tem por padrão; o que sobrar veio de `extra=` e entra no JSON.
-# color_message é a cópia da mensagem com códigos ANSI que o uvicorn anexa aos seus logs.
 _ATRIBUTOS_PADRAO = set(vars(logging.makeLogRecord({}))) | {"message", "asctime", "color_message"}
 
 

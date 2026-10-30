@@ -18,7 +18,7 @@ from src.application.fidelidade.fidelidade import (
     listar_historico,
     resgatar_pontos,
 )
-from src.domain.fidelidade.fidelidade import valor_dos_pontos
+from src.domain.fidelidade.fidelidade import calcular_valor_dos_pontos
 
 roteador = APIRouter(prefix="/fidelidade", tags=["Fidelidade"])
 
@@ -26,7 +26,9 @@ roteador = APIRouter(prefix="/fidelidade", tags=["Fidelidade"])
 @roteador.get("/saldo", **documentacao.CONSULTAR_SALDO_PONTOS)
 def consultar_meu_saldo(cliente: ClienteLogado, conexao: ConexaoBanco) -> SaldoPontosResposta:
     saldo = consultar_saldo(conexao, cliente.id)
-    return SaldoPontosResposta(saldo_pontos=saldo, valor_equivalente=valor_dos_pontos(saldo))
+    return SaldoPontosResposta(
+        saldo_pontos=saldo, valor_equivalente=calcular_valor_dos_pontos(saldo)
+    )
 
 
 @roteador.get("/historico", **documentacao.LISTAR_HISTORICO_PONTOS)
@@ -38,12 +40,8 @@ def listar_meu_historico(
     transacoes, total = listar_historico(conexao, cliente.id, paginacao.limit, paginacao.offset)
     return Pagina[TransacaoFidelidadeResposta].criar(
         [
-            TransacaoFidelidadeResposta(
-                transacao_id=transacao.id,
-                tipo=transacao.tipo,
-                pontos=transacao.pontos,
-                pedido_id=transacao.pedido_id,
-                created_at=transacao.created_at,
+            TransacaoFidelidadeResposta.model_validate(
+                {**vars(transacao), "transacao_id": transacao.id}
             )
             for transacao in transacoes
         ],

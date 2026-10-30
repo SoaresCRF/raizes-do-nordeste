@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Self
 
 
 @dataclass(frozen=True)
@@ -64,10 +65,12 @@ class GatewayPagamentoIndisponivel(ErroDominio):
     codigo = "GATEWAY_PAGAMENTO_INDISPONIVEL"
 
 
+MENSAGEM_DADOS_INVALIDOS = "Dados de entrada inválidos"
+
+
 class DadosInvalidos(ErroDominio):
-    # Mesmo código da validação de entrada: é uma regra de coerência entre campos
-    # que só o domínio conhece (perfil × unidade), não um conflito de estado.
     codigo = "VALIDACAO_FALHOU"
 
-
-MENSAGEM_DADOS_INVALIDOS = "Dados de entrada inválidos"
+    @classmethod
+    def no_campo(cls, campo: str, problema: str) -> Self:
+        return cls(MENSAGEM_DADOS_INVALIDOS, [DetalheErro(campo, problema)])

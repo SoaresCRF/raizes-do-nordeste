@@ -3,25 +3,22 @@ from dataclasses import asdict
 from sqlalchemy import Connection
 
 from src.domain.auditoria.auditoria import AcaoAuditoria
-from src.domain.erros.erros import RecursoNaoEncontrado
-from src.domain.unidade.unidade import DadosUnidade, Unidade
+from src.domain.unidade.unidade import DadosUnidade, Unidade, unidade_nao_encontrada
 from src.infrastructure.database.repositorios.auditoria import RepositorioAuditoria
 from src.infrastructure.database.repositorios.unidades import RepositorioUnidades
 
 ENTIDADE_UNIDADE = "Unidade"
 
 
-def listar_unidades(
-    conexao: Connection, regiao: str | None, limit: int, offset: int
-) -> tuple[list[Unidade], int]:
+def listar_unidades(conexao: Connection, limit: int, offset: int) -> tuple[list[Unidade], int]:
     repositorio = RepositorioUnidades(conexao)
-    return repositorio.listar(regiao, limit, offset), repositorio.contar(regiao)
+    return repositorio.listar(limit, offset), repositorio.contar()
 
 
 def consultar_unidade(conexao: Connection, unidade_id: int) -> Unidade:
     unidade = RepositorioUnidades(conexao).buscar_por_id(unidade_id)
     if unidade is None:
-        raise RecursoNaoEncontrado(f"Unidade {unidade_id} não encontrada")
+        raise unidade_nao_encontrada(unidade_id)
     return unidade
 
 
@@ -44,5 +41,5 @@ def atualizar_unidade(
 ) -> Unidade:
     unidade = RepositorioUnidades(conexao).atualizar(unidade_id, dados, ativa)
     if unidade is None:
-        raise RecursoNaoEncontrado(f"Unidade {unidade_id} não encontrada")
+        raise unidade_nao_encontrada(unidade_id)
     return unidade

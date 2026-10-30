@@ -8,8 +8,6 @@ from src.api.schemas.base import EsquemaSaida
 
 LIMITE_PADRAO = 10
 LIMITE_MAXIMO = 100
-# O OFFSET é (page - 1) * limit; sem teto, um page enorme estoura o bigint do
-# Postgres e vira 500 em vez de 422.
 PAGINA_MAXIMA = 1_000_000
 
 

@@ -15,8 +15,6 @@ dependencies = [
     "uvicorn>=0.54.0",
 ]
 
-# O Windows Application Control da máquina de desenvolvimento bloqueia a
-# extensão Cython do SQLAlchemy 2.1; compilar sem ela usa o fallback em Python puro.
 [tool.uv]
 no-binary-package = ["sqlalchemy"]
 
@@ -31,17 +29,7 @@ extend-exclude = ["*.md"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
-[tool.pytest.ini_options]
-pythonpath = ["."]
-testpaths = ["tests"]
-filterwarnings = [
-    # O Starlette 1.7 recomenda o httpx2 no TestClient; trocar exige dependência nova.
-    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
-]
-
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
-    "pytest>=9.1.1",
     "ruff>=0.16.10",
 ]

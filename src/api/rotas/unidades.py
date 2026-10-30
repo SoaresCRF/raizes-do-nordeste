@@ -1,17 +1,15 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Query
-from pydantic import StringConstraints
+from fastapi import APIRouter, Body, Depends
 
 from src.api.autenticacao import AdminLogado, exigir_perfil
 from src.api.dependencias import ConexaoBanco
 from src.api.openapi import unidades as documentacao
-from src.api.schemas.campos import IdDoRecurso, SemCaractereNulo
+from src.api.schemas.campos import IdDoRecurso
 from src.api.schemas.paginacao import Pagina, ParametrosPaginacao, obter_paginacao
 from src.api.schemas.produtos import ItemCardapioResposta
 from src.api.schemas.unidades import (
-    TAMANHO_MAXIMO_REGIAO,
     AlteracaoUnidade,
     NovaUnidade,
     UnidadeResposta,
@@ -33,16 +31,10 @@ roteador = APIRouter(prefix="/unidades", tags=["Unidades"])
 def listar_unidades_da_rede(
     paginacao: Annotated[ParametrosPaginacao, Depends(obter_paginacao)],
     conexao: ConexaoBanco,
-    regiao: Annotated[
-        str | None,
-        StringConstraints(min_length=1, max_length=TAMANHO_MAXIMO_REGIAO),
-        SemCaractereNulo,
-        Query(),
-    ] = None,
 ) -> Pagina[UnidadeResposta]:
-    unidades, total = listar_unidades(conexao, regiao, paginacao.limit, paginacao.offset)
+    unidades, total = listar_unidades(conexao, paginacao.limit, paginacao.offset)
     return Pagina[UnidadeResposta].criar(
-        [UnidadeResposta.model_validate(unidade, from_attributes=True) for unidade in unidades],
+        [UnidadeResposta.model_validate(unidade) for unidade in unidades],
         total,
         paginacao,
     )
@@ -50,9 +42,7 @@ def listar_unidades_da_rede(
 
 @roteador.get("/{id}", **documentacao.CONSULTAR_UNIDADE)
 def consultar_unidade_por_id(unidade_id: IdDoRecurso, conexao: ConexaoBanco) -> UnidadeResposta:
-    return UnidadeResposta.model_validate(
-        consultar_unidade(conexao, unidade_id), from_attributes=True
-    )
+    return UnidadeResposta.model_validate(consultar_unidade(conexao, unidade_id))
 
 
 @roteador.post("", status_code=HTTPStatus.CREATED, **documentacao.CADASTRAR_UNIDADE)
@@ -61,11 +51,8 @@ def cadastrar_nova_unidade(
     admin: AdminLogado,
     conexao: ConexaoBanco,
 ) -> UnidadeResposta:
-    dados = DadosUnidade(
-        nome=nova.nome, cidade=nova.cidade, uf=nova.uf, regiao=nova.regiao, tipo=nova.tipo
-    )
     return UnidadeResposta.model_validate(
-        cadastrar_unidade(conexao, admin.id, dados), from_attributes=True
+        cadastrar_unidade(conexao, admin.id, DadosUnidade(**nova.model_dump()))
     )
 
 
@@ -81,16 +68,9 @@ def atualizar_unidade_existente(
     ],
     conexao: ConexaoBanco,
 ) -> UnidadeResposta:
-    dados = DadosUnidade(
-        nome=alteracao.nome,
-        cidade=alteracao.cidade,
-        uf=alteracao.uf,
-        regiao=alteracao.regiao,
-        tipo=alteracao.tipo,
-    )
-    return UnidadeResposta.model_validate(
-        atualizar_unidade(conexao, unidade_id, dados, alteracao.ativa), from_attributes=True
-    )
+    dados = DadosUnidade(**alteracao.model_dump(exclude={"ativa"}))
+    unidade = atualizar_unidade(conexao, unidade_id, dados, alteracao.ativa)
+    return UnidadeResposta.model_validate(unidade)
 
 
 @roteador.get("/{id}/cardapio", **documentacao.CONSULTAR_CARDAPIO)
@@ -101,7 +81,7 @@ def consultar_cardapio_da_unidade(
 ) -> Pagina[ItemCardapioResposta]:
     itens, total = consultar_cardapio(conexao, unidade_id, paginacao.limit, paginacao.offset)
     return Pagina[ItemCardapioResposta].criar(
-        [ItemCardapioResposta.model_validate(item, from_attributes=True) for item in itens],
+        [ItemCardapioResposta.model_validate(item) for item in itens],
         total,
         paginacao,
     )

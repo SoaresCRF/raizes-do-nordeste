@@ -4,7 +4,6 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     Column,
-    Date,
     DateTime,
     Enum,
     ForeignKey,
@@ -29,8 +28,6 @@ from src.domain.pedido.pedido import CanalPedido, StatusPedido
 from src.domain.unidade.unidade import TipoUnidade
 from src.domain.usuario.usuario import PERFIS_LOTADOS_EM_UNIDADE, FinalidadeConsentimento, Perfil
 
-# Nomes determinísticos de constraints e índices: o autogenerate e o downgrade
-# dependem deles para criar e remover exatamente os mesmos objetos.
 CONVENCAO_DE_NOMES = {
     "ix": "ix_%(column_0_label)s",
     "uq": "uq_%(table_name)s_%(column_0_N_name)s",
@@ -43,8 +40,6 @@ metadata = MetaData(naming_convention=CONVENCAO_DE_NOMES)
 
 
 def _enum(tipo: type[StrEnum], nome: str) -> Enum:
-    # VARCHAR + CHECK em vez de ENUM nativo: o rollback não deixa tipos para trás
-    # e acrescentar um valor não exige ALTER TYPE.
     return Enum(tipo, name=nome, native_enum=False, create_constraint=True)
 
 
@@ -102,14 +97,8 @@ produto = Table(
     Column("descricao", Text),
     Column("preco", Numeric(10, 2), nullable=False),
     Column("ativo", Boolean, nullable=False, server_default=true()),
-    Column("disponivel_de", Date),
-    Column("disponivel_ate", Date),
     *_colunas_de_data(),
     CheckConstraint("preco > 0", name="preco_positivo"),
-    CheckConstraint(
-        "disponivel_de IS NULL OR disponivel_ate IS NULL OR disponivel_de <= disponivel_ate",
-        name="periodo_disponibilidade_valido",
-    ),
 )
 
 estoque = Table(
@@ -188,7 +177,6 @@ pagamento = Table(
     Column("transacao_externa_id", String(80)),
     Column("motivo_recusa", String(200)),
     Column("payload_gateway", JSONB),
-    Column("chave_idempotencia", String(80), unique=True),
     *_colunas_de_data(),
     CheckConstraint("valor > 0", name="valor_positivo"),
 )
@@ -245,8 +233,6 @@ sessao = Table(
     metadata,
     Column("id", Integer, Identity(), primary_key=True),
     Column("usuario_id", Integer, ForeignKey("usuario.id"), nullable=False, index=True),
-    Column("refresh_token_hash", String(64), nullable=False, unique=True),
-    Column("expira_em", DateTime(timezone=True), nullable=False),
     Column("revogada_em", DateTime(timezone=True)),
     *_colunas_de_data(),
 )

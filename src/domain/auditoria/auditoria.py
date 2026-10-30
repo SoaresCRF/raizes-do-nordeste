@@ -14,7 +14,6 @@ class AcaoAuditoria(StrEnum):
     PEDIDO_CANCELADO = "PEDIDO_CANCELADO"
     PAGAMENTO_REGISTRADO = "PAGAMENTO_REGISTRADO"
     PONTOS_RESGATADOS = "PONTOS_RESGATADOS"
-    PAGAMENTO_ESTORNADO = "PAGAMENTO_ESTORNADO"
 
 
 @dataclass
@@ -36,5 +35,4 @@ class LogAuditoria:
 class FiltrosAuditoria:
     entidade: str | None
     entidade_id: int | None
-    acao: AcaoAuditoria | None
     unidade_id: int | None

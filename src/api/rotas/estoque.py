@@ -7,18 +7,9 @@ from src.api.autenticacao import FuncionarioLogado, GestorLogado
 from src.api.dependencias import ConexaoBanco
 from src.api.openapi import estoque as documentacao
 from src.api.schemas.campos import ID_MAXIMO
-from src.api.schemas.estoque import (
-    MovimentacaoHistoricoResposta,
-    MovimentacaoResposta,
-    NovaMovimentacao,
-    SaldoResposta,
-)
+from src.api.schemas.estoque import MovimentacaoResposta, NovaMovimentacao, SaldoResposta
 from src.api.schemas.paginacao import Pagina, ParametrosPaginacao, obter_paginacao
-from src.application.estoque.estoque import (
-    consultar_saldos,
-    listar_movimentacoes,
-    movimentar_estoque,
-)
+from src.application.estoque.estoque import consultar_saldos, movimentar_estoque
 from src.domain.estoque.estoque import DadosMovimentacao
 
 roteador = APIRouter(prefix="/estoque", tags=["Estoque"])
@@ -37,7 +28,7 @@ def consultar_saldos_da_unidade(
         conexao, usuario, unidade_id, paginacao.limit, paginacao.offset
     )
     return Pagina[SaldoResposta].criar(
-        [SaldoResposta.model_validate(saldo, from_attributes=True) for saldo in saldos],
+        [SaldoResposta.model_validate(saldo) for saldo in saldos],
         total,
         paginacao,
     )
@@ -51,38 +42,12 @@ def movimentar_estoque_da_unidade(
     usuario: GestorLogado,
     conexao: ConexaoBanco,
 ) -> MovimentacaoResposta:
-    dados = DadosMovimentacao(
-        unidade_id=nova.unidade_id,
-        produto_id=nova.produto_id,
-        tipo=nova.tipo,
-        quantidade=nova.quantidade,
-        motivo=nova.motivo,
+    movimentacao, saldo_atual = movimentar_estoque(
+        conexao, usuario, DadosMovimentacao(**nova.model_dump())
     )
-    movimentacao, saldo_atual = movimentar_estoque(conexao, usuario, dados)
     return MovimentacaoResposta(
         movimentacao_id=movimentacao.id,
         tipo=movimentacao.tipo,
         quantidade=movimentacao.quantidade,
         saldo_atual=saldo_atual,
-    )
-
-
-@roteador.get("/movimentacoes", **documentacao.LISTAR_MOVIMENTACOES)
-def listar_movimentacoes_da_unidade(
-    unidade_id: UnidadeDoFiltro,
-    paginacao: Annotated[ParametrosPaginacao, Depends(obter_paginacao)],
-    usuario: GestorLogado,
-    conexao: ConexaoBanco,
-    produto_id: Annotated[int | None, Query(alias="produtoId", gt=0, le=ID_MAXIMO)] = None,
-) -> Pagina[MovimentacaoHistoricoResposta]:
-    itens, total = listar_movimentacoes(
-        conexao, usuario, unidade_id, produto_id, paginacao.limit, paginacao.offset
-    )
-    return Pagina[MovimentacaoHistoricoResposta].criar(
-        [
-            MovimentacaoHistoricoResposta.model_validate(item, from_attributes=True)
-            for item in itens
-        ],
-        total,
-        paginacao,
     )

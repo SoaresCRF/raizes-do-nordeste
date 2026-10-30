@@ -1,39 +1,66 @@
 ---
 config:
+  theme: base
   layout: elk
+  fontFamily: "Segoe UI, Arial, sans-serif"
+  themeVariables:
+    fontSize: 15px
+    primaryColor: "#FFFFFF"
+    primaryBorderColor: "#7B8794"
+    primaryTextColor: "#1F2933"
+    lineColor: "#616E7C"
+    clusterBkg: "#F1F4F8"
+    clusterBorder: "#9AA5B1"
+    edgeLabelBackground: "#FFFFFF"
+    dropShadow: none
+  flowchart:
+    nodeSpacing: 36
+    rankSpacing: 60
+    padding: 18
+    wrappingWidth: 320
 ---
 flowchart TB
-    clientes["Canais: App, Web, Totem, Pickup, Balcão"]
-    subgraph api["API (src/api)"]
-        rotas["rotas, schemas, autenticação, middlewares, tratador de erros, OpenAPI"]
+    clientes(["Canais: App, Web, Totem, Pickup, Balcão"])
+
+    subgraph api["API · src/api"]
+        rotas["rotas, schemas, autenticação,<br/>middlewares, tratador de erros, OpenAPI"]
     end
-    subgraph application["Application (src/application)"]
+
+    subgraph application["Application · src/application"]
         casos["casos de uso por recurso"]
         portas["portas: GatewayPagamento"]
     end
-    subgraph domain["Domain (src/domain)"]
-        entidades["entidades, enums, regras e erros de domínio"]
-    end
-    subgraph infrastructure["Infrastructure (src/infrastructure)"]
-        banco["database: tabelas, migrations, repositórios, seed"]
+
+    subgraph infrastructure["Infrastructure · src/infrastructure"]
         pagamento["pagamento: GatewayPagamentoMock"]
+        banco["database: tabelas, migrations,<br/>repositórios, seed"]
         seguranca["seguranca: hash argon2, JWT"]
         logging["logging: logs JSON com request_id"]
     end
+
+    subgraph domain["Domain · src/domain"]
+        entidades["entidades, enums, regras e erros de domínio"]
+    end
+
     postgres[("PostgreSQL 17")]
 
+    %% As rotas usam todos os módulos de Application e Infrastructure, por isso a seta vai para o grupo.
     clientes -- "HTTP + JSON, JWT Bearer" --> rotas
-    rotas --> casos
+    rotas --> application
+    rotas --> infrastructure
     rotas --> entidades
-    rotas --> banco
-    rotas --> portas
-    rotas --> pagamento
-    rotas --> seguranca
-    rotas --> logging
+    casos --> portas
     casos --> entidades
     casos --> banco
-    casos --> portas
     casos --> seguranca
-    pagamento -. implementa .-> portas
-    banco --> postgres
+    portas -. implementada por .- pagamento
+    banco --> seguranca
+    banco --> logging
     banco --> entidades
+    seguranca --> entidades
+    banco --> postgres
+
+    classDef nucleo fill:#E6EEF6,stroke:#2F5F8A,stroke-width:1.5px,color:#102A43
+    classDef externo fill:#FFFFFF,stroke:#52606D,stroke-width:1px,color:#1F2933
+    class entidades nucleo
+    class clientes,postgres externo

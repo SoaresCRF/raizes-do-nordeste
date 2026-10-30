@@ -7,17 +7,16 @@ from src.api.openapi.respostas import (
     TOKEN_AUSENTE,
     UNIDADE_INEXISTENTE,
     ExemploErro,
+    documentar_erros,
+    documentar_sucesso,
     nao_encontrado,
     perfil_sem_permissao,
-    resposta_de_sucesso,
-    respostas_de_erro,
     sem_acesso_a_unidade,
     validacao_falhou,
 )
 from src.domain.erros.erros import (
     AcessoNegado,
     EstoqueInsuficiente,
-    GatewayPagamentoIndisponivel,
     PagamentoNaoPermitido,
     ProdutoIndisponivelNaUnidade,
     TransicaoStatusInvalida,
@@ -32,10 +31,9 @@ PAGAMENTO_NAO_PERMITIDO = ExemploErro(
     "Pedido 9002 está EM_PREPARO e não aceita pagamento nem resgate",
 )
 
-# Exemplo de contrato da seção 8 do PROJETO.md (união dos dois exemplos do RT, CF06).
 EXEMPLOS_CRIAR_PEDIDO = {
     "totem": {
-        "summary": "Cliente no totem (exemplo da seção 8)",
+        "summary": "Cliente no totem (exemplo do roteiro)",
         "value": {
             "canalPedido": "TOTEM",
             "unidadeId": 2,
@@ -51,7 +49,7 @@ EXEMPLOS_CRIAR_PEDIDO = {
         "value": {
             "canalPedido": "BALCAO",
             "unidadeId": 1,
-            "clienteId": 6,
+            "clienteId": 5,
             "itens": [{"produtoId": 1, "quantidade": 1}],
             "formaPagamento": "MOCK",
         },
@@ -67,19 +65,19 @@ CRIAR_PEDIDO: dict[str, Any] = {
         "mais dão 422). Canal por perfil (RN26): CLIENTE usa `APP`, `TOTEM`, `PICKUP` ou "
         "`WEB` e o cliente vem do token; ATENDENTE usa `BALCAO` e pode informar `clienteId` "
         "(sem ele o pedido não acumula pontos). Cada produto aparece uma vez em `itens`. "
-        "Produto não oferecido na unidade, inativo ou fora do período: 409 "
-        "`PRODUTO_INDISPONIVEL_NA_UNIDADE` (RN03, RN24); saldo insuficiente: 409 "
+        "Produto não oferecido na unidade ou inativo: 409 "
+        "`PRODUTO_INDISPONIVEL_NA_UNIDADE` (RN03); saldo insuficiente: 409 "
         "`ESTOQUE_INSUFICIENTE`. Unidade, produto ou `clienteId` inexistente (ou de um usuário "
         "que não é cliente ativo): 404. A criação fica na auditoria."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.CREATED,
             "Pedido criado",
             {
                 "totem": {
                     "pedidoId": 9001,
-                    "clienteId": 6,
+                    "clienteId": 5,
                     "canalPedido": "TOTEM",
                     "unidadeId": 2,
                     "status": "AGUARDANDO_PAGAMENTO",
@@ -94,7 +92,7 @@ CRIAR_PEDIDO: dict[str, Any] = {
                 }
             },
         ),
-        **respostas_de_erro(
+        **documentar_erros(
             "/pedidos",
             JSON_MALFORMADO,
             TOKEN_AUSENTE,
@@ -124,7 +122,7 @@ EXEMPLOS_STATUS_PEDIDO = {
 
 PEDIDO_AGUARDANDO = {
     "pedidoId": 9002,
-    "clienteId": 6,
+    "clienteId": 5,
     "canalPedido": "APP",
     "unidadeId": 1,
     "status": "AGUARDANDO_PAGAMENTO",
@@ -138,14 +136,13 @@ LISTAR_PEDIDOS: dict[str, Any] = {
     "summary": "Listar pedidos",
     "description": (
         "**Perfil:** autenticado. CLIENTE vê só os próprios pedidos; ATENDENTE, COZINHA e "
-        "GERENTE, os da própria unidade (filtrar outra unidade dá 403, RN23); ADMIN vê "
-        "todos.\n\n"
+        "GERENTE, os da própria unidade (RN23); ADMIN vê todos.\n\n"
         "Resumo dos pedidos, mais recentes primeiro, paginado. Filtros opcionais: "
-        "`canalPedido`, `status` e `unidadeId`. Exemplo: "
+        "`canalPedido` e `status`. Exemplo: "
         "`GET /pedidos?canalPedido=APP&status=AGUARDANDO_PAGAMENTO`."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.OK,
             "Página de pedidos",
             {
@@ -155,10 +152,9 @@ LISTAR_PEDIDOS: dict[str, Any] = {
                 }
             },
         ),
-        **respostas_de_erro(
+        **documentar_erros(
             "/pedidos",
             TOKEN_AUSENTE,
-            sem_acesso_a_unidade(2),
             validacao_falhou(
                 "status",
                 "Deve ser um destes valores: 'AGUARDANDO_PAGAMENTO', 'EM_PREPARO', 'PRONTO', "
@@ -176,7 +172,7 @@ PEDIDO_EM_PREPARO = {
         {"produtoId": 4, "quantidade": 1, "precoUnitario": 9.9},
     ],
     "motivoCancelamento": None,
-    "cliente": {"id": 6, "nome": "Maria Cliente"},
+    "cliente": {"id": 5, "nome": "Maria Cliente"},
     "ultimoPagamento": {
         "pagamentoId": 31,
         "status": "APROVADO",
@@ -197,10 +193,10 @@ CONSULTAR_PEDIDO: dict[str, Any] = {
         "pessoais fica na auditoria (RN21)."
     ),
     "responses": {
-        **resposta_de_sucesso(HTTPStatus.OK, "Pedido", {"pago": PEDIDO_EM_PREPARO}),
-        **respostas_de_erro("/pedidos/9002", TOKEN_AUSENTE, sem_acesso_a_unidade(1)),
-        **respostas_de_erro("/pedidos/99", PEDIDO_INEXISTENTE),
-        **respostas_de_erro("/pedidos/abc", ID_NAO_INTEIRO),
+        **documentar_sucesso(HTTPStatus.OK, "Pedido", {"pago": PEDIDO_EM_PREPARO}),
+        **documentar_erros("/pedidos/9002", TOKEN_AUSENTE, sem_acesso_a_unidade(1)),
+        **documentar_erros("/pedidos/99", PEDIDO_INEXISTENTE),
+        **documentar_erros("/pedidos/abc", ID_NAO_INTEIRO),
     },
 }
 
@@ -220,7 +216,7 @@ ALTERAR_STATUS: dict[str, Any] = {
         "fica na auditoria."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.OK,
             "Status alterado",
             {
@@ -232,7 +228,7 @@ ALTERAR_STATUS: dict[str, Any] = {
                 }
             },
         ),
-        **respostas_de_erro(
+        **documentar_erros(
             "/pedidos/9002/status",
             JSON_MALFORMADO,
             TOKEN_AUSENTE,
@@ -248,7 +244,7 @@ ALTERAR_STATUS: dict[str, Any] = {
             ),
             validacao_falhou("status", "Deve ser um destes valores: 'PRONTO' ou 'ENTREGUE'"),
         ),
-        **respostas_de_erro("/pedidos/99/status", PEDIDO_INEXISTENTE),
+        **documentar_erros("/pedidos/99/status", PEDIDO_INEXISTENTE),
     },
 }
 
@@ -264,49 +260,36 @@ CANCELAR_PEDIDO: dict[str, Any] = {
     "summary": "Cancelar pedido",
     "description": (
         "**Perfil:** CLIENTE (só o próprio pedido), ATENDENTE e GERENTE (só pedidos da "
-        "própria unidade) e ADMIN, conforme o status (RN16).\n\n"
-        "`AGUARDANDO_PAGAMENTO`: cancelam CLIENTE, ATENDENTE, GERENTE e ADMIN. `EM_PREPARO`: "
-        "só GERENTE e ADMIN, porque o pagamento aprovado é estornado no gateway "
-        "(`pagamentoEstornado: true`). `PRONTO`, `ENTREGUE` e `CANCELADO` não cancelam (409 "
-        "`TRANSICAO_STATUS_INVALIDA`). O cancelamento devolve o estoque dos itens (RN07), "
-        "estorna os pontos ligados ao pedido e fica na auditoria. Se o gateway falhar no "
-        "estorno, nada muda e a resposta é 503; o header `X-Simular-Resultado` (`ERRO` ou "
-        "`TIMEOUT`) simula essa falha."
+        "própria unidade) e ADMIN (RN16).\n\n"
+        "Só pedido `AGUARDANDO_PAGAMENTO` pode ser cancelado; nos demais status a resposta é "
+        "409 `TRANSICAO_STATUS_INVALIDA`, porque pedido pago não tem estorno pela API. O "
+        "cancelamento devolve o estoque dos itens (RN07) e os pontos resgatados no pedido e "
+        "fica na auditoria."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.OK,
             "Pedido cancelado",
             {
-                "pago_e_estornado": {
-                    "pedidoId": 9002,
+                "desistencia": {
+                    "pedidoId": 9001,
                     "status": "CANCELADO",
                     "motivoCancelamento": MOTIVO_EXEMPLO,
-                    "pagamentoEstornado": True,
                 }
             },
         ),
-        **respostas_de_erro(
+        **documentar_erros(
             "/pedidos/9002/cancelamento",
             JSON_MALFORMADO,
             TOKEN_AUSENTE,
-            ExemploErro(
-                HTTPStatus.FORBIDDEN,
-                AcessoNegado.codigo,
-                "Perfil ATENDENTE não pode cancelar pedido em EM_PREPARO",
-            ),
+            perfil_sem_permissao(Perfil.COZINHA),
             ExemploErro(
                 HTTPStatus.CONFLICT,
                 TransicaoStatusInvalida.codigo,
-                "Pedido em ENTREGUE não pode passar para CANCELADO",
+                "Pedido em EM_PREPARO não pode passar para CANCELADO",
             ),
             validacao_falhou("motivo", "Campo obrigatório"),
-            ExemploErro(
-                HTTPStatus.SERVICE_UNAVAILABLE,
-                GatewayPagamentoIndisponivel.codigo,
-                "Gateway de pagamento indisponível; pedido 9002 não foi cancelado",
-            ),
         ),
-        **respostas_de_erro("/pedidos/99/cancelamento", PEDIDO_INEXISTENTE),
+        **documentar_erros("/pedidos/99/cancelamento", PEDIDO_INEXISTENTE),
     },
 }

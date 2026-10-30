@@ -10,7 +10,6 @@ from src.domain.fidelidade.fidelidade import (
     tem_consentimento_fidelidade,
 )
 from src.domain.pedido.pedido import (
-    ENTIDADE_PEDIDO,
     Pedido,
     verificar_aguardando_pagamento,
     verificar_pedido_acessivel,
@@ -29,12 +28,9 @@ def _consentiu_fidelidade(conexao: Connection, cliente_id: int) -> bool:
 
 
 def creditar_pontos(conexao: Connection, pedido: Pedido) -> None:
-    """Credita os pontos do pagamento aprovado (RN18) se o cliente consentiu (RN17)."""
-    # Pedido de balcão sem cliente não pontua (Q03).
     if pedido.cliente_id is None or not _consentiu_fidelidade(conexao, pedido.cliente_id):
         return
     pontos = calcular_pontos_ganhos(pedido.total)
-    # Abaixo de R$ 1,00 não há ponto inteiro, e a tabela não aceita transação de 0 pontos.
     if pontos == 0:
         return
     RepositorioFidelidade(conexao).inserir(
@@ -61,22 +57,18 @@ def resgatar_pontos(
     verificar_aguardando_pagamento(pedido)
     if not _consentiu_fidelidade(conexao, cliente.id):
         raise ConsentimentoAusente(f"Cliente {cliente.id} sem consentimento FIDELIDADE ativo")
-    # Trava o cliente antes de ler o saldo: dois resgates simultâneos em pedidos
-    # diferentes não gastam os mesmos pontos.
     RepositorioUsuarios(conexao).travar(cliente.id)
     repositorio = RepositorioFidelidade(conexao)
     saldo = repositorio.calcular_saldo(cliente.id)
     desconto = calcular_desconto_do_resgate(pontos, saldo, pedido.total)
     repositorio.inserir(cliente.id, TipoTransacaoFidelidade.RESGATE, -pontos, pedido.id)
     com_desconto = repositorio_pedidos.aplicar_desconto(pedido.id, desconto)
-    RepositorioAuditoria(conexao).registrar(
-        usuario_id=cliente.id,
-        unidade_id=pedido.unidade_id,
-        acao=AcaoAuditoria.PONTOS_RESGATADOS,
-        entidade=ENTIDADE_PEDIDO,
-        entidade_id=pedido.id,
-        dados_antes={"desconto": str(pedido.desconto), "total": str(pedido.total)},
-        dados_depois={
+    RepositorioAuditoria(conexao).registrar_do_pedido(
+        cliente.id,
+        AcaoAuditoria.PONTOS_RESGATADOS,
+        pedido,
+        {"desconto": str(pedido.desconto), "total": str(pedido.total)},
+        {
             "pontos": pontos,
             "desconto": str(com_desconto.desconto),
             "total": str(com_desconto.total),
@@ -85,15 +77,11 @@ def resgatar_pontos(
     return com_desconto, saldo - pontos
 
 
-def estornar_pontos(conexao: Connection, pedido: Pedido, tipo: TipoTransacaoFidelidade) -> None:
-    """Lança um ESTORNO que desfaz as transações do tipo dado no pedido (RN16, Q12).
-
-    O saldo pode ficar negativo quando os pontos ganhos já foram usados.
-    """
+def estornar_pontos_resgatados(conexao: Connection, pedido: Pedido) -> None:
     if pedido.cliente_id is None:
         return
     repositorio = RepositorioFidelidade(conexao)
-    pontos = repositorio.somar_do_pedido(pedido.id, tipo)
+    pontos = repositorio.somar_do_pedido(pedido.id, TipoTransacaoFidelidade.RESGATE)
     if pontos == 0:
         return
     repositorio.inserir(pedido.cliente_id, TipoTransacaoFidelidade.ESTORNO, -pontos, pedido.id)

@@ -1,6 +1,5 @@
 from src.api.schemas.base import DataHoraUtc, EsquemaSaida
 
-# Coluna log_auditoria.entidade: varchar(40).
 TAMANHO_MAXIMO_ENTIDADE = 40
 
 

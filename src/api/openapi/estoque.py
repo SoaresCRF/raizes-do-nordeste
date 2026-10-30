@@ -3,13 +3,12 @@ from typing import Any
 
 from src.api.openapi.respostas import (
     JSON_MALFORMADO,
-    TIMESTAMP_EXEMPLO,
     TOKEN_AUSENTE,
     UNIDADE_INEXISTENTE,
     ExemploErro,
+    documentar_erros,
+    documentar_sucesso,
     nao_encontrado,
-    resposta_de_sucesso,
-    respostas_de_erro,
     sem_acesso_a_unidade,
     validacao_falhou,
 )
@@ -26,7 +25,7 @@ CONSULTAR_SALDOS: dict[str, Any] = {
         "funcionário recebe o 403 antes de saber se a unidade existe (RN23)."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.OK,
             "Página de saldos",
             {
@@ -35,11 +34,11 @@ CONSULTAR_SALDOS: dict[str, Any] = {
                         {"produtoId": 1, "nome": "Tapioca", "quantidade": 100},
                         {"produtoId": 2, "nome": "Cuscuz recheado", "quantidade": 100},
                     ],
-                    "paginacao": {"page": 1, "limit": 2, "total": 7, "totalPaginas": 4},
+                    "paginacao": {"page": 1, "limit": 2, "total": 6, "totalPaginas": 3},
                 }
             },
         ),
-        **respostas_de_erro(
+        **documentar_erros(
             "/estoque",
             TOKEN_AUSENTE,
             sem_acesso_a_unidade(2),
@@ -73,7 +72,7 @@ MOVIMENTAR_ESTOQUE: dict[str, Any] = {
         "auditoria."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.CREATED,
             "Movimentação registrada",
             {
@@ -85,7 +84,7 @@ MOVIMENTAR_ESTOQUE: dict[str, Any] = {
                 }
             },
         ),
-        **respostas_de_erro(
+        **documentar_erros(
             "/estoque/movimentacoes",
             JSON_MALFORMADO,
             TOKEN_AUSENTE,
@@ -98,55 +97,6 @@ MOVIMENTAR_ESTOQUE: dict[str, Any] = {
                 (("quantidade", "Disponível: 2"),),
             ),
             validacao_falhou("quantidade", "Deve ser maior que 0"),
-        ),
-    },
-}
-
-LISTAR_MOVIMENTACOES: dict[str, Any] = {
-    "summary": "Listar movimentações de estoque",
-    "description": (
-        "**Perfil:** GERENTE (só a própria unidade) e ADMIN.\n\n"
-        "Histórico de entradas e saídas da unidade, mais recentes primeiro, paginado. "
-        "`unidadeId` é obrigatório e `produtoId` filtra um produto. Saídas de pedido trazem o "
-        "`pedidoId`; o cancelamento devolve o estoque como entrada."
-    ),
-    "responses": {
-        **resposta_de_sucesso(
-            HTTPStatus.OK,
-            "Página de movimentações",
-            {
-                "recife": {
-                    "dados": [
-                        {
-                            "movimentacaoId": 13,
-                            "produtoId": 1,
-                            "tipo": "SAIDA",
-                            "quantidade": 2,
-                            "motivo": "Pedido 15",
-                            "pedidoId": 15,
-                            "usuarioId": 6,
-                            "createdAt": TIMESTAMP_EXEMPLO,
-                        },
-                        {
-                            "movimentacaoId": 12,
-                            "produtoId": 3,
-                            "tipo": "ENTRADA",
-                            "quantidade": 20,
-                            "motivo": "Reposição semanal",
-                            "pedidoId": None,
-                            "usuarioId": 2,
-                            "createdAt": TIMESTAMP_EXEMPLO,
-                        },
-                    ],
-                    "paginacao": {"page": 1, "limit": 10, "total": 2, "totalPaginas": 1},
-                }
-            },
-        ),
-        **respostas_de_erro(
-            "/estoque/movimentacoes",
-            TOKEN_AUSENTE,
-            sem_acesso_a_unidade(2),
-            UNIDADE_DO_FILTRO_AUSENTE,
         ),
     },
 }

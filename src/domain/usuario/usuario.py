@@ -3,10 +3,7 @@ from datetime import datetime
 from enum import StrEnum
 
 from src.domain.erros.erros import (
-    MENSAGEM_DADOS_INVALIDOS,
     AcessoNegado,
-    DadosInvalidos,
-    DetalheErro,
 )
 
 
@@ -19,24 +16,14 @@ class Perfil(StrEnum):
 
 
 PERFIS_LOTADOS_EM_UNIDADE = (Perfil.ATENDENTE, Perfil.COZINHA, Perfil.GERENTE)
-
-
-def validar_lotacao(perfil: Perfil, unidade_id: int | None) -> None:
-    """Funcionário de unidade tem unidade; ADMIN atua na rede toda e não tem (RF02)."""
-    if perfil == Perfil.CLIENTE:
-        detalhe = DetalheErro("perfil", "CLIENTE não é perfil de funcionário")
-    elif perfil in PERFIS_LOTADOS_EM_UNIDADE and unidade_id is None:
-        detalhe = DetalheErro("unidadeId", f"Obrigatório para o perfil {perfil}")
-    elif perfil not in PERFIS_LOTADOS_EM_UNIDADE and unidade_id is not None:
-        detalhe = DetalheErro("unidadeId", f"Não se aplica ao perfil {perfil}")
-    else:
-        return
-    raise DadosInvalidos(MENSAGEM_DADOS_INVALIDOS, [detalhe])
+MENSAGEM_SEM_ACESSO_A_UNIDADE = "Usuário sem acesso à unidade {unidade_id}"
 
 
 class FinalidadeConsentimento(StrEnum):
     FIDELIDADE = "FIDELIDADE"
-    MARKETING = "MARKETING"
+
+
+VERSAO_TERMO_VIGENTE = "1.0"
 
 
 @dataclass
@@ -69,8 +56,6 @@ class Consentimento:
 class Sessao:
     id: int
     usuario_id: int
-    refresh_token_hash: str
-    expira_em: datetime
     revogada_em: datetime | None
     created_at: datetime
     updated_at: datetime
@@ -85,9 +70,11 @@ class UsuarioAutenticado:
 
 
 def verificar_acesso_a_unidade(usuario: UsuarioAutenticado, unidade_id: int) -> None:
-    """Funcionário de unidade só atua na própria; ADMIN atua na rede toda (RN23).
-
-    Não decide o que cada perfil pode fazer: isso fica com `exigir_perfil` na rota.
-    """
     if usuario.perfil in PERFIS_LOTADOS_EM_UNIDADE and usuario.unidade_id != unidade_id:
-        raise AcessoNegado(f"Usuário sem acesso à unidade {unidade_id}")
+        raise AcessoNegado(MENSAGEM_SEM_ACESSO_A_UNIDADE.format(unidade_id=unidade_id))
+
+
+def obter_unidade_restrita(usuario: UsuarioAutenticado) -> int | None:
+    if usuario.perfil not in PERFIS_LOTADOS_EM_UNIDADE:
+        return None
+    return usuario.unidade_id

@@ -22,7 +22,6 @@ class TransacaoFidelidadeResposta(EsquemaSaida):
 
 class NovoResgate(EsquemaEntrada):
     pedido_id: Annotated[int, Field(le=ID_MAXIMO)]
-    # strict: sem ele o Pydantic aceita true como 1 e "100" como 100.
     pontos: Annotated[int, Field(strict=True, gt=0, multiple_of=PONTOS_POR_RESGATE)]
 
 

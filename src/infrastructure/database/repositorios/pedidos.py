@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from sqlalchemy import ColumnElement, Connection, func, insert, select, update
+from sqlalchemy import ColumnElement, Connection, Select, func, insert, select, update
 
 from src.domain.pagamento.pagamento import FormaPagamento
 from src.domain.pedido.pedido import (
@@ -14,7 +14,7 @@ from src.domain.pedido.pedido import (
 from src.infrastructure.database.tabelas import item_pedido, pedido
 
 
-def _filtros(filtros: FiltrosPedido) -> list[ColumnElement[bool]]:
+def _montar_condicoes(filtros: FiltrosPedido) -> list[ColumnElement[bool]]:
     pares = [
         (pedido.c.canal_pedido, filtros.canal_pedido),
         (pedido.c.status, filtros.status),
@@ -38,7 +38,6 @@ class RepositorioPedidos:
         subtotal: Decimal,
         criado_por_id: int,
     ) -> Pedido:
-        # Na criação não há desconto: ele só surge com o resgate de pontos (RN19).
         comando = (
             insert(pedido)
             .values(
@@ -67,9 +66,12 @@ class RepositorioPedidos:
         ]
         return [ItemPedido(**linha._mapping) for linha in self._conexao.execute(comando, registros)]
 
-    def buscar_por_id(self, pedido_id: int) -> Pedido | None:
-        linha = self._conexao.execute(select(pedido).where(pedido.c.id == pedido_id)).one_or_none()
+    def _buscar(self, consulta: Select) -> Pedido | None:
+        linha = self._conexao.execute(consulta).one_or_none()
         return Pedido(**linha._mapping) if linha else None
+
+    def buscar_por_id(self, pedido_id: int) -> Pedido | None:
+        return self._buscar(select(pedido).where(pedido.c.id == pedido_id))
 
     def listar_itens(self, pedido_id: int) -> list[ItemPedido]:
         consulta = (
@@ -80,10 +82,9 @@ class RepositorioPedidos:
         return [ItemPedido(**linha._mapping) for linha in self._conexao.execute(consulta)]
 
     def listar(self, filtros: FiltrosPedido, limit: int, offset: int) -> list[Pedido]:
-        # Mais recentes primeiro: é a ordem em que balcão e cozinha acompanham a fila.
         consulta = (
             select(pedido)
-            .where(*_filtros(filtros))
+            .where(*_montar_condicoes(filtros))
             .order_by(pedido.c.id.desc())
             .limit(limit)
             .offset(offset)
@@ -91,35 +92,23 @@ class RepositorioPedidos:
         return [Pedido(**linha._mapping) for linha in self._conexao.execute(consulta)]
 
     def contar(self, filtros: FiltrosPedido) -> int:
-        consulta = select(func.count()).select_from(pedido).where(*_filtros(filtros))
+        consulta = select(func.count()).select_from(pedido).where(*_montar_condicoes(filtros))
         return self._conexao.execute(consulta).scalar_one()
 
     def travar(self, pedido_id: int) -> Pedido | None:
-        linha = self._conexao.execute(
-            select(pedido).where(pedido.c.id == pedido_id).with_for_update()
-        ).one_or_none()
-        return Pedido(**linha._mapping) if linha else None
+        return self._buscar(select(pedido).where(pedido.c.id == pedido_id).with_for_update())
+
+    def _atualizar(self, pedido_id: int, **valores: object) -> Pedido:
+        comando = update(pedido).where(pedido.c.id == pedido_id).values(**valores).returning(pedido)
+        return Pedido(**self._conexao.execute(comando).one()._mapping)
 
     def atualizar_status(self, pedido_id: int, status: StatusPedido) -> Pedido:
-        comando = (
-            update(pedido).where(pedido.c.id == pedido_id).values(status=status).returning(pedido)
-        )
-        return Pedido(**self._conexao.execute(comando).one()._mapping)
+        return self._atualizar(pedido_id, status=status)
 
     def cancelar(self, pedido_id: int, motivo: str) -> Pedido:
-        comando = (
-            update(pedido)
-            .where(pedido.c.id == pedido_id)
-            .values(status=StatusPedido.CANCELADO, motivo_cancelamento=motivo)
-            .returning(pedido)
-        )
-        return Pedido(**self._conexao.execute(comando).one()._mapping)
+        return self._atualizar(pedido_id, status=StatusPedido.CANCELADO, motivo_cancelamento=motivo)
 
     def aplicar_desconto(self, pedido_id: int, desconto: Decimal) -> Pedido:
-        comando = (
-            update(pedido)
-            .where(pedido.c.id == pedido_id)
-            .values(desconto=pedido.c.desconto + desconto, total=pedido.c.total - desconto)
-            .returning(pedido)
+        return self._atualizar(
+            pedido_id, desconto=pedido.c.desconto + desconto, total=pedido.c.total - desconto
         )
-        return Pedido(**self._conexao.execute(comando).one()._mapping)

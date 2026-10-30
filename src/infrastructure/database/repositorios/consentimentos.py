@@ -29,7 +29,6 @@ class RepositorioConsentimentos:
         return Consentimento(**self._conexao.execute(comando).one()._mapping)
 
     def listar_vigentes(self, usuario_id: int) -> list[Consentimento]:
-        # Cada mudança é uma linha nova (histórico); vale a mais recente de cada finalidade.
         consulta = (
             select(consentimento)
             .ext(distinct_on(consentimento.c.finalidade))

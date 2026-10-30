@@ -1,29 +1,22 @@
 docs/fontes/
+docs/normas abnt/
 *.pdf
 
-# Ambiente
 .env
 
-# Python
 __pycache__/
 *.py[cod]
 .venv/
-.pytest_cache/
 .ruff_cache/
-.coverage
-htmlcov/
 build/
 dist/
 *.egg-info/
 
-# IDE e sistema
 .vscode/
 .idea/
 Thumbs.db
 .DS_Store
 
-# Logs
 *.log
 
-# Rascunho do relatório (o PDF final é entregue no AVA, não no repositório)
 docs/relatorio/

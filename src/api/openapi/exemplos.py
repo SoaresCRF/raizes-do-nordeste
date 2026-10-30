@@ -6,12 +6,7 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute, RouteContext, iter_route_contexts
 
 
-def restaurar_exemplos(contrato: dict[str, Any], rotas: Iterable[RouteContext]) -> None:
-    """Recoloca no contrato os exemplos de body e de resposta como foram escritos.
-
-    O FastAPI gera o contrato com exclude_none, que apaga os null de dentro dos
-    exemplos; sem eles o exemplo deixa de mostrar o contrato real.
-    """
+def _restaurar_exemplos(contrato: dict[str, Any], rotas: Iterable[RouteContext]) -> None:
     for rota in rotas:
         if not isinstance(rota.original_route, APIRoute):
             continue
@@ -32,7 +27,7 @@ def preservar_exemplos(app: FastAPI) -> None:
 
     def gerar_contrato_com_exemplos() -> dict[str, Any]:
         if app.openapi_schema is None:
-            restaurar_exemplos(gerar_contrato(), iter_route_contexts(app.routes))
+            _restaurar_exemplos(gerar_contrato(), iter_route_contexts(app.routes))
         return app.openapi_schema
 
     app.openapi = gerar_contrato_com_exemplos

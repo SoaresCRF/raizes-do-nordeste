@@ -6,8 +6,7 @@ from sqlalchemy import Connection
 
 from src.application.portas.gateway_pagamento import GatewayPagamento
 from src.infrastructure.pagamento.gateway_mock import GatewayPagamentoMock, ResultadoSimulado
-from src.infrastructure.seguranca.hash_senha import HashSenha
-from src.infrastructure.seguranca.token import TokenJwt
+from src.infrastructure.seguranca.token import ServicoTokenJwt
 
 
 def obter_conexao(request: Request) -> Iterator[Connection]:
@@ -15,41 +14,29 @@ def obter_conexao(request: Request) -> Iterator[Connection]:
         yield conexao
 
 
-# scope="function": o commit acontece antes de a resposta sair. No escopo padrão
-# ("request") o cliente receberia sucesso mesmo que o commit falhasse depois.
 ConexaoBanco = Annotated[Connection, Depends(obter_conexao, scope="function")]
 
 
-def obter_hash_senha(request: Request) -> HashSenha:
-    return request.app.state.hash_senha
+def obter_servico_token(request: Request) -> ServicoTokenJwt:
+    return request.app.state.servico_token
 
 
-ServicoHashSenha = Annotated[HashSenha, Depends(obter_hash_senha)]
-
-
-def obter_token_jwt(request: Request) -> TokenJwt:
-    return request.app.state.token_jwt
-
-
-ServicoToken = Annotated[TokenJwt, Depends(obter_token_jwt)]
+ServicoToken = Annotated[ServicoTokenJwt, Depends(obter_servico_token)]
 
 
 DESCRICAO_SIMULAR_RESULTADO = (
-    "Só para o gateway simulado: escolhe o resultado do mock. Em `POST /pagamentos`: "
-    "`APROVADO` (padrão), `RECUSADO`, `ERRO` ou `TIMEOUT`. No cancelamento, `ERRO` e "
-    "`TIMEOUT` simulam falha no estorno; os outros valores estornam."
+    "Só para o gateway simulado: escolhe o resultado do mock: `APROVADO` (padrão), "
+    "`RECUSADO` ou `ERRO`."
 )
 
 
 def obter_gateway_pagamento(
-    request: Request,
     resultado: Annotated[
         ResultadoSimulado,
         Header(alias="X-Simular-Resultado", description=DESCRICAO_SIMULAR_RESULTADO),
     ] = ResultadoSimulado.APROVADO,
 ) -> GatewayPagamento:
-    # O header só existe porque o gateway é simulado (Q06): não chega ao caso de uso.
-    return GatewayPagamentoMock(resultado, request.app.state.gateway_timeout_segundos)
+    return GatewayPagamentoMock(resultado)
 
 
 ServicoGatewayPagamento = Annotated[GatewayPagamento, Depends(obter_gateway_pagamento)]

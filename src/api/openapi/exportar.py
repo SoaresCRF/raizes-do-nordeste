@@ -4,7 +4,6 @@ from pathlib import Path
 from src.config.configuracao import carregar_configuracao
 from src.main import criar_app
 
-# Contrato legível no repositório sem subir a API (CF14).
 CONTRATO_VERSIONADO = Path(__file__).resolve().parents[3] / "docs" / "openapi.json"
 
 

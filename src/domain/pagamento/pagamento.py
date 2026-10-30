@@ -9,11 +9,9 @@ class FormaPagamento(StrEnum):
 
 
 class StatusPagamento(StrEnum):
-    PENDENTE = "PENDENTE"
     APROVADO = "APROVADO"
     RECUSADO = "RECUSADO"
     ERRO = "ERRO"
-    ESTORNADO = "ESTORNADO"
 
 
 @dataclass
@@ -26,6 +24,5 @@ class Pagamento:
     transacao_externa_id: str | None
     motivo_recusa: str | None
     payload_gateway: dict | None
-    chave_idempotencia: str | None
     created_at: datetime
     updated_at: datetime

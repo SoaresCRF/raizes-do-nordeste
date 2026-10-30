@@ -5,7 +5,6 @@ from src.api.erros import DetalheResposta
 
 ORIGENS_DE_PARAMETRO = {"body", "query", "path", "header", "cookie"}
 PROBLEMA_GENERICO = "Valor inválido"
-MENSAGEM_DATA = "Deve ser uma data no formato AAAA-MM-DD"
 MENSAGEM_INTEIRO = "Deve ser um número inteiro"
 MENSAGEM_DECIMAL = "Deve ser um número decimal"
 MENSAGEM_BOOLEANO = "Deve ser true ou false"
@@ -32,12 +31,10 @@ PROBLEMAS_POR_TIPO = {
     "greater_than_equal": "Deve ser maior ou igual a {ge}",
     "less_than": "Deve ser menor que {lt}",
     "less_than_equal": "Deve ser menor ou igual a {le}",
+    "multiple_of": "Deve ser múltiplo de {multiple_of}",
     "enum": "Deve ser um destes valores: {expected}",
-    "date_parsing": MENSAGEM_DATA,
-    "date_from_datetime_parsing": MENSAGEM_DATA,
-    "date_type": MENSAGEM_DATA,
-    "date_from_datetime_inexact": MENSAGEM_DATA,
     "list_type": "Deve ser uma lista",
+    "too_short": "Deve ter pelo menos {min_length} item(ns)",
     "model_attributes_type": MENSAGEM_OBJETO,
     "dict_type": MENSAGEM_OBJETO,
     "email_invalido": "Deve ser um e-mail válido",
@@ -46,7 +43,7 @@ PROBLEMAS_POR_TIPO = {
 }
 
 
-def _campo(localizacao: Sequence[str | int]) -> str:
+def _formatar_campo(localizacao: Sequence[str | int]) -> str:
     partes = localizacao
     if len(localizacao) > 1 and localizacao[0] in ORIGENS_DE_PARAMETRO:
         partes = localizacao[1:]
@@ -59,16 +56,18 @@ def _campo(localizacao: Sequence[str | int]) -> str:
     return campo
 
 
-def _problema(erro: Mapping[str, Any]) -> str:
+def _descrever_problema(erro: Mapping[str, Any]) -> str:
     modelo = PROBLEMAS_POR_TIPO.get(erro["type"])
     if modelo is None:
         return PROBLEMA_GENERICO
     contexto = dict(erro.get("ctx") or {})
     if "expected" in contexto:
-        # O Pydantic lista as opções em inglês: "'A', 'B' or 'C'".
         contexto["expected"] = contexto["expected"].replace(" or ", " ou ")
     return modelo.format(**contexto)
 
 
 def detalhes_de_validacao(erros: Sequence[Mapping[str, Any]]) -> list[DetalheResposta]:
-    return [DetalheResposta(field=_campo(erro["loc"]), issue=_problema(erro)) for erro in erros]
+    return [
+        DetalheResposta(field=_formatar_campo(erro["loc"]), issue=_descrever_problema(erro))
+        for erro in erros
+    ]

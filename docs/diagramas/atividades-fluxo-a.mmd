@@ -1,31 +1,79 @@
-flowchart TD
-    inicio([Início]) --> login[Cliente ou atendente faz login<br/>POST /auth/login]
-    login --> cardapio[Consulta o cardápio da unidade<br/>GET /unidades/id/cardapio]
-    cardapio --> criar[Envia o pedido<br/>POST /pedidos]
-    criar --> body{Body e canal válidos?}
-    body -- não --> e422[422 VALIDACAO_FALHOU] --> fim1([Fim])
-    body -- sim --> acesso{Funcionário atua na<br/>própria unidade?}
-    acesso -- não --> e403[403 ACESSO_NEGADO] --> fim1
-    acesso -- sim --> existe{Unidade e produtos existem?}
-    existe -- não --> e404[404 RECURSO_NAO_ENCONTRADO] --> fim1
-    existe -- sim --> oferta{Produtos ofertados na unidade?}
-    oferta -- não --> e409o[409 PRODUTO_INDISPONIVEL_NA_UNIDADE] --> fim1
-    oferta -- sim --> saldo{Saldo suficiente?<br/>linhas de estoque travadas}
-    saldo -- não --> e409e[409 ESTOQUE_INSUFICIENTE] --> fim1
-    saldo -- sim --> registra[Cria o pedido AGUARDANDO_PAGAMENTO,<br/>copia os preços, baixa o estoque<br/>e audita PEDIDO_CRIADO]
-    registra --> resgate{Cliente quer<br/>resgatar pontos?}
-    resgate -- sim --> resgatar[POST /fidelidade/resgates<br/>desconto aplicado e total recalculado]
-    resgatar --> pagar
-    resgate -- não --> pagar[Solicita o pagamento<br/>POST /pagamentos]
-    pagar --> status{Pedido AGUARDANDO_PAGAMENTO?}
-    status -- não --> e409p[409 PAGAMENTO_NAO_PERMITIDO] --> fim1
-    status -- sim --> gateway[Registra o pagamento PENDENTE<br/>e chama o gateway mock]
-    gateway --> resultado{Resultado do gateway}
-    resultado -- APROVADO --> aprovado[Pagamento APROVADO, pedido EM_PREPARO,<br/>pontos creditados, auditoria]
-    resultado -- RECUSADO --> recusado[Pagamento RECUSADO, pedido inalterado,<br/>201 com o motivo]
-    recusado --> pagar
-    resultado -- falha ou timeout --> erro[Pagamento ERRO, pedido inalterado,<br/>503 GATEWAY_PAGAMENTO_INDISPONIVEL]
-    erro --> pagar
-    aprovado --> pronto[Cozinha marca PRONTO<br/>PATCH /pedidos/id/status]
-    pronto --> entregue[Atendente marca ENTREGUE<br/>PATCH /pedidos/id/status]
-    entregue --> fim2([Fim])
+---
+config:
+  theme: base
+  fontFamily: "Segoe UI, Arial, sans-serif"
+  themeVariables:
+    fontSize: 15px
+    primaryColor: "#FFFFFF"
+    primaryBorderColor: "#7B8794"
+    primaryTextColor: "#1F2933"
+    lineColor: "#616E7C"
+    clusterBkg: "#F1F4F8"
+    clusterBorder: "#9AA5B1"
+    edgeLabelBackground: "#F1F4F8"
+    dropShadow: none
+  flowchart:
+    nodeSpacing: 10
+    rankSpacing: 16
+    padding: 4
+    subGraphTitleMargin:
+      top: 4
+      bottom: 4
+    wrappingWidth: 320
+---
+flowchart TB
+    subgraph etapa1["1. Validação do pedido"]
+        direction LR
+        inicio@{ shape: f-circ, label: "Início" }
+        inicio --> login[Login<br/>POST /auth/login]
+        login --> criar[Envia o pedido<br/>POST /pedidos]
+        criar --> body{Body e canal<br/>válidos?}
+        body -- não --> e422(["422 VALIDACAO_<br/>FALHOU"])
+        body -- sim --> acesso{Funcionário<br/>na unidade?}
+        acesso -- não --> e403(["403 ACESSO_<br/>NEGADO"])
+    end
+    subgraph etapa2["2. Unidade, cliente, produtos e estoque com linhas travadas (depois de sim na etapa 1)"]
+        direction LR
+        existe{Cadastros<br/>existem?}
+        existe -- não --> e404(["404 RECURSO_<br/>NAO_ENCONTRADO"])
+        existe -- sim --> oferta{Produtos<br/>ofertados?}
+        oferta -- não --> e409o(["409 PRODUTO_<br/>INDISPONIVEL_<br/>NA_UNIDADE"])
+        oferta -- sim --> saldo{Saldo<br/>suficiente?}
+        saldo -- não --> e409e(["409 ESTOQUE_<br/>INSUFICIENTE"])
+    end
+    subgraph etapa3["3. Criação do pedido e pagamento (depois de sim na etapa 2)"]
+        direction LR
+        registra[Cria pedido<br/>AGUARDANDO_<br/>PAGAMENTO, copia<br/>preços, baixa<br/>estoque e audita]
+        registra --> resgate{Resgata<br/>pontos?}
+        resgate -- sim --> resgatar[POST /fidelidade/<br/>resgates:<br/>desconto]
+        resgatar --> pagar
+        resgate -- não --> pagar[Solicita<br/>pagamento<br/>POST /pagamentos]
+        retorno([nova tentativa]) --> pagar
+        pagar --> status{Aguarda<br/>pagamento?}
+        status -- não --> e409p(["409 PAGAMENTO_<br/>NAO_PERMITIDO"])
+    end
+    subgraph etapa4["4. Resultado do gateway mock (depois de sim na etapa 3)"]
+        direction LR
+        gateway[Chama gateway,<br/>registra e audita]
+        gateway --> resultado{Resultado}
+        resultado -- APROVADO --> aprovado[APROVADO: pedido<br/>EM_PREPARO, pontos<br/>com consentimento]
+        aprovado --> pronto[Cozinha marca<br/>PRONTO]
+        pronto --> entregue[Atendente marca<br/>ENTREGUE]
+        entregue --> fim2@{ shape: fr-circ, label: "Fim" }
+        resultado -- RECUSADO --> recusado[RECUSADO: pedido<br/>inalterado, 201<br/>com o motivo]
+        recusado --> volta([nova tentativa])
+        resultado -- falha --> erro[ERRO: pedido inalterado,<br/>503 GATEWAY_<br/>PAGAMENTO_INDISPONIVEL]
+        erro --> volta
+    end
+    etapa1 --> etapa2
+    etapa2 --> etapa3
+    etapa3 --> etapa4
+
+    classDef erro fill:#FBEDEC,stroke:#B4544B,stroke-width:1px,color:#7A2E28
+    classDef decisao fill:#FFFFFF,stroke:#52606D,stroke-width:1.2px,color:#1F2933
+    classDef conector fill:#FFFFFF,stroke:#52606D,stroke-width:1.2px,color:#1F2933
+    class retorno,volta conector
+    class e422,e403,e404,e409o,e409e,e409p erro
+    class body,acesso,existe,oferta,saldo,resgate,status,resultado decisao
+    style inicio fill:#1F2933
+    style fim2 stroke:#1F2933

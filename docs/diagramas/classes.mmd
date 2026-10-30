@@ -1,3 +1,19 @@
+---
+config:
+  theme: base
+  layout: elk
+  elk:
+    nodePlacementStrategy: NETWORK_SIMPLEX
+  fontFamily: "Segoe UI, Arial, sans-serif"
+  themeVariables:
+    fontSize: 15px
+    primaryColor: "#FFFFFF"
+    primaryBorderColor: "#7B8794"
+    primaryTextColor: "#1F2933"
+    lineColor: "#616E7C"
+    edgeLabelBackground: "#FFFFFF"
+    dropShadow: none
+---
 classDiagram
     direction LR
 
@@ -31,8 +47,6 @@ classDiagram
     class Sessao {
         +int id
         +int usuario_id
-        +str refresh_token_hash
-        +datetime expira_em
         +datetime revogada_em
     }
     class Produto {
@@ -41,8 +55,6 @@ classDiagram
         +str descricao
         +Decimal preco
         +bool ativo
-        +date disponivel_de
-        +date disponivel_ate
     }
     class Estoque {
         +int id
@@ -88,7 +100,6 @@ classDiagram
         +str transacao_externa_id
         +str motivo_recusa
         +dict payload_gateway
-        +str chave_idempotencia
     }
     class TransacaoFidelidade {
         +int id
@@ -110,14 +121,28 @@ classDiagram
     }
     class GatewayPagamento {
         <<interface>>
-        +cobrar(referencia: int, valor: Decimal) RespostaCobranca
-        +estornar(transacao_externa_id: str, valor: Decimal) None
+        +cobrar(referencia: int, valor: Decimal) RespostaCobranca*
     }
     class GatewayPagamentoMock {
         +cobrar(referencia: int, valor: Decimal) RespostaCobranca
-        +estornar(transacao_externa_id: str, valor: Decimal) None
     }
 
+    class TipoUnidade {
+        <<enumeration>>
+        COZINHA_COMPLETA
+        FORMATO_REDUZIDO
+    }
+    class TipoMovimentacao {
+        <<enumeration>>
+        ENTRADA
+        SAIDA
+    }
+    class TipoTransacaoFidelidade {
+        <<enumeration>>
+        ACUMULO
+        RESGATE
+        ESTORNO
+    }
     class Perfil {
         <<enumeration>>
         CLIENTE
@@ -144,11 +169,9 @@ classDiagram
     }
     class StatusPagamento {
         <<enumeration>>
-        PENDENTE
         APROVADO
         RECUSADO
         ERRO
-        ESTORNADO
     }
 
     Unidade "0..1" -- "*" Usuario : lota
@@ -157,16 +180,23 @@ classDiagram
     Unidade "1" *-- "*" Estoque : possui
     Produto "1" -- "*" Estoque : estocado em
     Estoque "1" *-- "*" MovimentacaoEstoque : registra
+    Usuario "1" -- "*" MovimentacaoEstoque : executa
+    Pedido "0..1" -- "*" MovimentacaoEstoque : origina
     Unidade "1" -- "*" Pedido : recebe
     Usuario "0..1" -- "*" Pedido : faz
+    Usuario "1" -- "*" Pedido : registra
     Pedido "1" *-- "1..*" ItemPedido : contém
     Produto "1" -- "*" ItemPedido : vendido em
     Pedido "1" -- "*" Pagamento : tentativas
     Pedido "1" -- "*" TransacaoFidelidade : origina
     Usuario "1" -- "*" TransacaoFidelidade : acumula
     Usuario "0..1" -- "*" LogAuditoria : executa
+    Unidade "0..1" -- "*" LogAuditoria : escopo de
     GatewayPagamentoMock ..|> GatewayPagamento
     Usuario --> Perfil
     Pedido --> CanalPedido
     Pedido --> StatusPedido
     Pagamento --> StatusPagamento
+    Unidade --> TipoUnidade
+    MovimentacaoEstoque --> TipoMovimentacao
+    TransacaoFidelidade --> TipoTransacaoFidelidade

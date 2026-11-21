@@ -1,26 +1,11 @@
-docs/fontes/
-*.pdf
-
-# Ambiente
 .env
 
-# Python
 __pycache__/
 *.py[cod]
 .venv/
-.pytest_cache/
 .ruff_cache/
-.coverage
-htmlcov/
-build/
-dist/
-*.egg-info/
 
-# IDE e sistema
 .vscode/
 .idea/
 Thumbs.db
 .DS_Store
-
-# Logs
-*.log

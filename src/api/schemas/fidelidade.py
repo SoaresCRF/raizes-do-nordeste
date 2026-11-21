@@ -4,7 +4,7 @@ from pydantic import Field
 
 from src.api.schemas.base import DataHoraUtc, EsquemaEntrada, EsquemaSaida, ValorMonetario
 from src.api.schemas.campos import ID_MAXIMO
-from src.domain.fidelidade.fidelidade import PONTOS_POR_RESGATE, TipoTransacaoFidelidade
+from src.domain.fidelidade import PONTOS_POR_RESGATE, TipoTransacaoFidelidade
 
 
 class SaldoPontosResposta(EsquemaSaida):
@@ -22,7 +22,6 @@ class TransacaoFidelidadeResposta(EsquemaSaida):
 
 class NovoResgate(EsquemaEntrada):
     pedido_id: Annotated[int, Field(le=ID_MAXIMO)]
-    # strict: sem ele o Pydantic aceita true como 1 e "100" como 100.
     pontos: Annotated[int, Field(strict=True, gt=0, multiple_of=PONTOS_POR_RESGATE)]
 
 

@@ -6,31 +6,30 @@ from src.api.openapi.respostas import (
     JSON_MALFORMADO,
     TOKEN_AUSENTE,
     ExemploErro,
+    documentar_erros,
+    documentar_sucesso,
     perfil_sem_permissao,
-    resposta_de_sucesso,
-    respostas_de_erro,
     validacao_falhou,
 )
-from src.domain.erros.erros import ConsentimentoAusente, SaldoPontosInsuficiente
-from src.domain.usuario.usuario import Perfil
+from src.domain.erros import ConsentimentoAusente, SaldoPontosInsuficiente
+from src.domain.usuario import Perfil
 
-SO_CLIENTE = perfil_sem_permissao(Perfil.ATENDENTE)
+ATENDENTE_SEM_PERMISSAO = perfil_sem_permissao(Perfil.ATENDENTE)
 
 CONSULTAR_SALDO_PONTOS: dict[str, Any] = {
     "summary": "Consultar saldo de pontos",
     "description": (
         "**Perfil:** CLIENTE.\n\n"
         "Saldo de pontos do próprio cliente e quanto ele vale em desconto: cada 100 pontos "
-        "valem R$ 5,00 (RN19). O saldo pode ficar negativo quando um cancelamento estorna "
-        "pontos já usados; nesse caso `valorEquivalente` é 0."
+        "valem R$ 5,00 (RN19)."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.OK,
             "Saldo de pontos",
             {"saldo": {"saldoPontos": 247, "valorEquivalente": 10}},
         ),
-        **respostas_de_erro("/fidelidade/saldo", TOKEN_AUSENTE, SO_CLIENTE),
+        **documentar_erros("/fidelidade/saldo", TOKEN_AUSENTE, ATENDENTE_SEM_PERMISSAO),
     },
 }
 
@@ -39,10 +38,11 @@ LISTAR_HISTORICO_PONTOS: dict[str, Any] = {
     "description": (
         "**Perfil:** CLIENTE.\n\n"
         "Transações de pontos do próprio cliente, mais recentes primeiro, paginadas: "
-        "`ACUMULO` (pagamento aprovado), `RESGATE` (pontos negativos) e `ESTORNO`."
+        "`ACUMULO` (pagamento aprovado), `RESGATE` (pontos negativos) e `ESTORNO` (pontos "
+        "resgatados que voltam quando o pedido é cancelado)."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.OK,
             "Página de transações",
             {
@@ -67,10 +67,10 @@ LISTAR_HISTORICO_PONTOS: dict[str, Any] = {
                 }
             },
         ),
-        **respostas_de_erro(
+        **documentar_erros(
             "/fidelidade/historico",
             TOKEN_AUSENTE,
-            SO_CLIENTE,
+            ATENDENTE_SEM_PERMISSAO,
             validacao_falhou("page", "Deve ser maior ou igual a 1"),
         ),
     },
@@ -94,7 +94,7 @@ RESGATAR_PONTOS: dict[str, Any] = {
         "(422). O resgate fica na auditoria e é estornado se o pedido for cancelado."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.CREATED,
             "Pontos resgatados",
             {
@@ -107,11 +107,11 @@ RESGATAR_PONTOS: dict[str, Any] = {
                 }
             },
         ),
-        **respostas_de_erro(
+        **documentar_erros(
             "/fidelidade/resgates",
             JSON_MALFORMADO,
             TOKEN_AUSENTE,
-            SO_CLIENTE,
+            ATENDENTE_SEM_PERMISSAO,
             PEDIDO_INEXISTENTE,
             ExemploErro(
                 HTTPStatus.CONFLICT,

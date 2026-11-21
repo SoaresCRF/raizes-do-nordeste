@@ -1,8 +1,8 @@
 from sqlalchemy import Connection, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 
-from src.domain.erros.erros import DetalheErro, EmailJaCadastrado
-from src.domain.usuario.usuario import Perfil, Usuario
+from src.domain.erros import DetalheErro, EmailJaCadastrado
+from src.domain.usuario import Perfil, Usuario
 from src.infrastructure.database.tabelas import usuario
 
 RESTRICAO_EMAIL_UNICO = "uq_usuario_email"
@@ -34,9 +34,6 @@ class RepositorioUsuarios:
         try:
             linha = self._conexao.execute(comando).one()
         except IntegrityError as erro:
-            # A UNIQUE do banco decide: uma consulta antes do insert perderia para
-            # dois cadastros simultâneos. O DETAIL do Postgres traz o e-mail, por
-            # isso o erro original não é encadeado.
             if erro.orig.diag.constraint_name == RESTRICAO_EMAIL_UNICO:
                 raise EmailJaCadastrado(
                     MENSAGEM_EMAIL_JA_CADASTRADO, [DetalheErro("email", "Já cadastrado")]
@@ -49,6 +46,11 @@ class RepositorioUsuarios:
             select(usuario).where(usuario.c.id == usuario_id)
         ).one_or_none()
         return Usuario(**linha._mapping) if linha else None
+
+    def travar(self, usuario_id: int) -> None:
+        self._conexao.execute(
+            select(usuario.c.id).where(usuario.c.id == usuario_id).with_for_update(key_share=True)
+        )
 
     def anonimizar(self, usuario_id: int, nome: str, email: str, senha_hash: str) -> None:
         self._conexao.execute(

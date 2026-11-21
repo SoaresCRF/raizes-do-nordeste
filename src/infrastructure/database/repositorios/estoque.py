@@ -1,9 +1,8 @@
-from sqlalchemy import ColumnElement, Connection, func, select, update
+from sqlalchemy import Connection, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
-from src.domain.estoque.estoque import (
+from src.domain.estoque import (
     Estoque,
-    ItemHistoricoEstoque,
     MovimentacaoEstoque,
     SaldoProduto,
     TipoMovimentacao,
@@ -11,16 +10,6 @@ from src.domain.estoque.estoque import (
 from src.infrastructure.database.tabelas import estoque, movimentacao_estoque, produto
 
 _ESTOQUE_COM_PRODUTO = estoque.join(produto, produto.c.id == estoque.c.produto_id)
-_MOVIMENTACAO_COM_ESTOQUE = movimentacao_estoque.join(
-    estoque, estoque.c.id == movimentacao_estoque.c.estoque_id
-)
-
-
-def _no_historico(unidade_id: int, produto_id: int | None) -> list[ColumnElement[bool]]:
-    filtros = [estoque.c.unidade_id == unidade_id]
-    if produto_id is not None:
-        filtros.append(estoque.c.produto_id == produto_id)
-    return filtros
 
 
 class RepositorioEstoque:
@@ -44,9 +33,7 @@ class RepositorioEstoque:
         )
         return self._conexao.execute(consulta).scalar_one()
 
-    def criar_se_nao_existir(self, unidade_id: int, produto_id: int) -> None:
-        # ON CONFLICT: duas primeiras entradas simultâneas do mesmo produto não esbarram
-        # no único (unidade_id, produto_id). Não espera o lock de quem já movimenta.
+    def inserir_se_nao_existir(self, unidade_id: int, produto_id: int) -> None:
         comando = (
             insert(estoque)
             .values(unidade_id=unidade_id, produto_id=produto_id, quantidade=0)
@@ -55,8 +42,6 @@ class RepositorioEstoque:
         self._conexao.execute(comando)
 
     def travar(self, unidade_id: int, produto_id: int) -> Estoque:
-        # FOR UPDATE: movimentações simultâneas do mesmo produto esperam a vez, e a saída
-        # não confere o saldo com um valor que outra transação já mudou (RN06).
         consulta = (
             select(estoque)
             .where(estoque.c.unidade_id == unidade_id, estoque.c.produto_id == produto_id)
@@ -65,8 +50,6 @@ class RepositorioEstoque:
         return Estoque(**self._conexao.execute(consulta).one()._mapping)
 
     def travar_varios(self, unidade_id: int, produto_ids: list[int]) -> dict[int, Estoque]:
-        # Ordem fixa por produto: dois pedidos com produtos em comum pegam os locks na
-        # mesma sequência e não entram em deadlock.
         consulta = (
             select(estoque)
             .where(estoque.c.unidade_id == unidade_id, estoque.c.produto_id.in_(produto_ids))
@@ -105,33 +88,3 @@ class RepositorioEstoque:
             .returning(movimentacao_estoque)
         )
         return MovimentacaoEstoque(**self._conexao.execute(comando).one()._mapping)
-
-    def listar_movimentacoes(
-        self, unidade_id: int, produto_id: int | None, limit: int, offset: int
-    ) -> list[ItemHistoricoEstoque]:
-        consulta = (
-            select(
-                movimentacao_estoque.c.id.label("movimentacao_id"),
-                estoque.c.produto_id,
-                movimentacao_estoque.c.tipo,
-                movimentacao_estoque.c.quantidade,
-                movimentacao_estoque.c.motivo,
-                movimentacao_estoque.c.pedido_id,
-                movimentacao_estoque.c.usuario_id,
-                movimentacao_estoque.c.created_at,
-            )
-            .select_from(_MOVIMENTACAO_COM_ESTOQUE)
-            .where(*_no_historico(unidade_id, produto_id))
-            .order_by(movimentacao_estoque.c.id.desc())
-            .limit(limit)
-            .offset(offset)
-        )
-        return [ItemHistoricoEstoque(**linha._mapping) for linha in self._conexao.execute(consulta)]
-
-    def contar_movimentacoes(self, unidade_id: int, produto_id: int | None) -> int:
-        consulta = (
-            select(func.count())
-            .select_from(_MOVIMENTACAO_COM_ESTOQUE)
-            .where(*_no_historico(unidade_id, produto_id))
-        )
-        return self._conexao.execute(consulta).scalar_one()

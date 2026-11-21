@@ -4,11 +4,9 @@ from pydantic import StringConstraints
 
 from src.api.schemas.base import EsquemaEntrada, EsquemaSaida
 from src.api.schemas.campos import TAMANHO_MAXIMO_SENHA, Email
-from src.domain.usuario.usuario import Perfil
+from src.domain.usuario import Perfil
 
 TIPO_TOKEN = "Bearer"
-# Folga sobre os 43 caracteres do token gerado; recusa textos enormes antes do SHA-256.
-TAMANHO_MAXIMO_REFRESH_TOKEN = 128
 
 
 class Credenciais(EsquemaEntrada):
@@ -24,19 +22,6 @@ class UsuarioDaSessao(EsquemaSaida):
 
 class TokensEmitidos(EsquemaSaida):
     access_token: str
-    refresh_token: str
     token_type: Literal["Bearer"] = TIPO_TOKEN
     expires_in: int
     user: UsuarioDaSessao
-
-
-class RenovacaoDeAcesso(EsquemaEntrada):
-    refresh_token: Annotated[
-        str, StringConstraints(min_length=1, max_length=TAMANHO_MAXIMO_REFRESH_TOKEN)
-    ]
-
-
-class AcessoRenovado(EsquemaSaida):
-    access_token: str
-    token_type: Literal["Bearer"] = TIPO_TOKEN
-    expires_in: int

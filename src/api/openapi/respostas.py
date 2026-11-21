@@ -2,18 +2,21 @@ from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Any
 
-from src.api.autenticacao import MENSAGEM_TOKEN_AUSENTE
+from src.api.autenticacao import MENSAGEM_PERFIL_SEM_PERMISSAO, MENSAGEM_TOKEN_AUSENTE
 from src.api.erros import (
     JSON_INVALIDO,
     MENSAGEM_JSON_INVALIDO,
-    MENSAGEM_VALIDACAO_FALHOU,
-    VALIDACAO_FALHOU,
     RespostaErro,
 )
-from src.domain.erros.erros import AcessoNegado, NaoAutenticado, RecursoNaoEncontrado
-from src.domain.usuario.usuario import Perfil
+from src.domain.erros import (
+    MENSAGEM_DADOS_INVALIDOS,
+    AcessoNegado,
+    DadosInvalidos,
+    NaoAutenticado,
+    RecursoNaoEncontrado,
+)
+from src.domain.usuario import MENSAGEM_SEM_ACESSO_A_UNIDADE, Perfil
 
-# Valores fixos no formato do RT (p. 21–22); na API o requestId é um UUID por requisição.
 TIMESTAMP_EXEMPLO = "2026-02-05T12:00:00Z"
 REQUEST_ID_EXEMPLO = "3f2c9a4e-7b1d-4c2a-9e8f-5d6c7b8a9e0f"
 
@@ -44,13 +47,15 @@ def perfil_sem_permissao(perfil: Perfil) -> ExemploErro:
     return ExemploErro(
         HTTPStatus.FORBIDDEN,
         AcessoNegado.codigo,
-        f"Perfil {perfil} sem permissão para esta operação",
+        MENSAGEM_PERFIL_SEM_PERMISSAO.format(perfil=perfil),
     )
 
 
 def sem_acesso_a_unidade(unidade_id: int) -> ExemploErro:
     return ExemploErro(
-        HTTPStatus.FORBIDDEN, AcessoNegado.codigo, f"Usuário sem acesso à unidade {unidade_id}"
+        HTTPStatus.FORBIDDEN,
+        AcessoNegado.codigo,
+        MENSAGEM_SEM_ACESSO_A_UNIDADE.format(unidade_id=unidade_id),
     )
 
 
@@ -61,8 +66,8 @@ def nao_encontrado(mensagem: str) -> ExemploErro:
 def validacao_falhou(campo: str, problema: str) -> ExemploErro:
     return ExemploErro(
         HTTPStatus.UNPROCESSABLE_CONTENT,
-        VALIDACAO_FALHOU,
-        MENSAGEM_VALIDACAO_FALHOU,
+        DadosInvalidos.codigo,
+        MENSAGEM_DADOS_INVALIDOS,
         ((campo, problema),),
     )
 
@@ -71,8 +76,7 @@ UNIDADE_INEXISTENTE = nao_encontrado("Unidade 99 não encontrada")
 ID_NAO_INTEIRO = validacao_falhou("id", "Deve ser um número inteiro")
 
 
-def respostas_de_erro(caminho: str, *exemplos: ExemploErro) -> dict[int, dict[str, Any]]:
-    """Respostas no formato de erro padrão (RNF10), com um exemplo por código de erro."""
+def documentar_erros(caminho: str, *exemplos: ExemploErro) -> dict[int, dict[str, Any]]:
     respostas: dict[int, dict[str, Any]] = {}
     for exemplo in exemplos:
         resposta = respostas.setdefault(
@@ -102,7 +106,7 @@ def respostas_de_erro(caminho: str, *exemplos: ExemploErro) -> dict[int, dict[st
     return respostas
 
 
-def resposta_de_sucesso(
+def documentar_sucesso(
     status: HTTPStatus, descricao: str, exemplos: dict[str, Any]
 ) -> dict[int, dict[str, Any]]:
     return {
@@ -117,5 +121,5 @@ def resposta_de_sucesso(
     }
 
 
-def resposta_sem_conteudo(descricao: str) -> dict[int, dict[str, Any]]:
+def documentar_sem_conteudo(descricao: str) -> dict[int, dict[str, Any]]:
     return {int(HTTPStatus.NO_CONTENT): {"description": descricao}}

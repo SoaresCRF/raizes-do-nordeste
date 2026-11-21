@@ -4,25 +4,26 @@ from typing import Any
 from src.api.openapi.respostas import (
     REQUEST_ID_EXEMPLO,
     TOKEN_AUSENTE,
-    resposta_de_sucesso,
-    respostas_de_erro,
-    sem_acesso_a_unidade,
+    documentar_erros,
+    documentar_sucesso,
+    perfil_sem_permissao,
     validacao_falhou,
 )
+from src.domain.usuario import Perfil
 
 LISTAR_AUDITORIA: dict[str, Any] = {
     "summary": "Listar registros de auditoria",
     "description": (
         "**Perfil:** GERENTE (só a própria unidade) e ADMIN.\n\n"
         "Registros de ações sensíveis (criação, mudança de status e cancelamento de pedido, "
-        "pagamento, estorno, resgate de pontos, movimentação de estoque, criação de unidade e "
+        "pagamento, resgate de pontos, movimentação de estoque, criação de unidade e "
         "alteração de produto) e de acesso a dados pessoais (RN21), mais recentes primeiro, "
-        "paginados. Sem `unidadeId`, o gerente vê a própria unidade; registros sem unidade "
-        "(produtos) só o ADMIN vê. Filtros: `entidade`, `entidadeId`, `acao` e `unidadeId`. "
+        "paginados. O gerente vê só a própria unidade; registros sem unidade (produtos) só o "
+        "ADMIN vê. Filtros: `entidade` e `entidadeId`. "
         "Valores em dinheiro aparecem como texto em `dadosAntes` e `dadosDepois`."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.OK,
             "Página de registros",
             {
@@ -30,7 +31,7 @@ LISTAR_AUDITORIA: dict[str, Any] = {
                     "dados": [
                         {
                             "logId": 58,
-                            "usuarioId": 6,
+                            "usuarioId": 5,
                             "unidadeId": 1,
                             "acao": "PAGAMENTO_REGISTRADO",
                             "entidade": "Pagamento",
@@ -49,10 +50,10 @@ LISTAR_AUDITORIA: dict[str, Any] = {
                 }
             },
         ),
-        **respostas_de_erro(
+        **documentar_erros(
             "/auditoria",
             TOKEN_AUSENTE,
-            sem_acesso_a_unidade(2),
+            perfil_sem_permissao(Perfil.CLIENTE),
             validacao_falhou("entidadeId", "Deve ser um número inteiro"),
         ),
     },

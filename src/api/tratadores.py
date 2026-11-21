@@ -11,16 +11,14 @@ from src.api.erros import (
     JSON_INVALIDO,
     MENSAGEM_ERRO_INTERNO,
     MENSAGEM_JSON_INVALIDO,
-    MENSAGEM_VALIDACAO_FALHOU,
     METODO_NAO_PERMITIDO,
     RECURSO_NAO_ENCONTRADO,
     STATUS_POR_ERRO,
-    VALIDACAO_FALHOU,
     DetalheResposta,
     resposta_de_erro,
 )
 from src.api.validacao import detalhes_de_validacao
-from src.domain.erros.erros import ErroDominio
+from src.domain.erros import MENSAGEM_DADOS_INVALIDOS, DadosInvalidos, ErroDominio
 
 logger = logging.getLogger(__name__)
 
@@ -40,14 +38,14 @@ async def _tratar_erro_de_validacao(request: Request, erro: RequestValidationErr
         )
     return resposta_de_erro(
         HTTPStatus.UNPROCESSABLE_CONTENT,
-        VALIDACAO_FALHOU,
-        MENSAGEM_VALIDACAO_FALHOU,
+        DadosInvalidos.codigo,
+        MENSAGEM_DADOS_INVALIDOS,
         request.url.path,
         detalhes_de_validacao(erros),
     )
 
 
-def _codigo_e_mensagem_http(request: Request, status: int) -> tuple[str, str] | None:
+def _mapear_erro_http(request: Request, status: int) -> tuple[str, str] | None:
     caminho = request.url.path
     match status:
         case HTTPStatus.BAD_REQUEST:
@@ -60,7 +58,7 @@ def _codigo_e_mensagem_http(request: Request, status: int) -> tuple[str, str] | 
 
 
 async def _tratar_erro_http(request: Request, erro: StarletteHTTPException) -> JSONResponse:
-    codigo_e_mensagem = _codigo_e_mensagem_http(request, erro.status_code)
+    codigo_e_mensagem = _mapear_erro_http(request, erro.status_code)
     if codigo_e_mensagem is None:
         logger.error("HTTPException %s sem código de erro mapeado", erro.status_code)
         return resposta_de_erro(

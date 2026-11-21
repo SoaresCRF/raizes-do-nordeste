@@ -1,8 +1,8 @@
 from decimal import Decimal
 
-from sqlalchemy import Connection, insert, select, update
+from sqlalchemy import Connection, insert, select
 
-from src.domain.pagamento.pagamento import FormaPagamento, Pagamento, StatusPagamento
+from src.domain.pagamento import FormaPagamento, Pagamento, StatusPagamento
 from src.infrastructure.database.tabelas import pagamento
 
 
@@ -20,30 +20,11 @@ class RepositorioPagamentos:
         linha = self._conexao.execute(consulta).one_or_none()
         return Pagamento(**linha._mapping) if linha else None
 
-    def buscar_por_id(self, pagamento_id: int) -> Pagamento | None:
-        linha = self._conexao.execute(
-            select(pagamento).where(pagamento.c.id == pagamento_id)
-        ).one_or_none()
-        return Pagamento(**linha._mapping) if linha else None
-
-    def inserir_pendente(
-        self, pedido_id: int, valor: Decimal, forma_pagamento: FormaPagamento
-    ) -> Pagamento:
-        comando = (
-            insert(pagamento)
-            .values(
-                pedido_id=pedido_id,
-                status=StatusPagamento.PENDENTE,
-                valor=valor,
-                forma_pagamento=forma_pagamento,
-            )
-            .returning(pagamento)
-        )
-        return Pagamento(**self._conexao.execute(comando).one()._mapping)
-
-    def registrar_resultado(
+    def inserir(
         self,
-        pagamento_id: int,
+        pedido_id: int,
+        valor: Decimal,
+        forma_pagamento: FormaPagamento,
         *,
         status: StatusPagamento,
         transacao_externa_id: str | None,
@@ -51,9 +32,11 @@ class RepositorioPagamentos:
         payload_gateway: dict | None,
     ) -> Pagamento:
         comando = (
-            update(pagamento)
-            .where(pagamento.c.id == pagamento_id)
+            insert(pagamento)
             .values(
+                pedido_id=pedido_id,
+                valor=valor,
+                forma_pagamento=forma_pagamento,
                 status=status,
                 transacao_externa_id=transacao_externa_id,
                 motivo_recusa=motivo_recusa,
@@ -62,8 +45,3 @@ class RepositorioPagamentos:
             .returning(pagamento)
         )
         return Pagamento(**self._conexao.execute(comando).one()._mapping)
-
-    def atualizar_status(self, pagamento_id: int, status: StatusPagamento) -> None:
-        self._conexao.execute(
-            update(pagamento).where(pagamento.c.id == pagamento_id).values(status=status)
-        )

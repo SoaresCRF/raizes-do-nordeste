@@ -5,9 +5,8 @@ from pydantic_core import PydanticCustomError
 
 from src.api.schemas.base import EsquemaEntrada, EsquemaSaida
 from src.api.schemas.campos import Nome
-from src.domain.unidade.unidade import TipoUnidade
+from src.domain.unidade import TipoUnidade
 
-# Tamanhos das colunas de `unidade` (tabelas.py).
 TAMANHO_MAXIMO_CIDADE = 80
 TAMANHO_MAXIMO_REGIAO = 40
 UFS = frozenset(

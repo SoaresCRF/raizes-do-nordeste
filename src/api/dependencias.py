@@ -1,11 +1,13 @@
 from collections.abc import Iterator
 from typing import Annotated
 
-from fastapi import Depends, Request
+from fastapi import Depends, Header, Request
 from sqlalchemy import Connection
 
-from src.infrastructure.seguranca.hash_senha import HashSenha
-from src.infrastructure.seguranca.token import TokenJwt
+from src.application.gateway_pagamento import GatewayPagamento
+from src.domain.pagamento import StatusPagamento
+from src.infrastructure.gateway_mock import GatewayPagamentoMock
+from src.infrastructure.seguranca.token import ServicoTokenJwt
 
 
 def obter_conexao(request: Request) -> Iterator[Connection]:
@@ -13,20 +15,29 @@ def obter_conexao(request: Request) -> Iterator[Connection]:
         yield conexao
 
 
-# scope="function": o commit acontece antes de a resposta sair. No escopo padrão
-# ("request") o cliente receberia sucesso mesmo que o commit falhasse depois.
 ConexaoBanco = Annotated[Connection, Depends(obter_conexao, scope="function")]
 
 
-def obter_hash_senha(request: Request) -> HashSenha:
-    return request.app.state.hash_senha
+def obter_servico_token(request: Request) -> ServicoTokenJwt:
+    return request.app.state.servico_token
 
 
-ServicoHashSenha = Annotated[HashSenha, Depends(obter_hash_senha)]
+ServicoToken = Annotated[ServicoTokenJwt, Depends(obter_servico_token)]
 
 
-def obter_token_jwt(request: Request) -> TokenJwt:
-    return request.app.state.token_jwt
+DESCRICAO_SIMULAR_RESULTADO = (
+    "Só para o gateway simulado: escolhe o resultado do mock: `APROVADO` (padrão), "
+    "`RECUSADO` ou `ERRO`."
+)
 
 
-ServicoToken = Annotated[TokenJwt, Depends(obter_token_jwt)]
+def obter_gateway_pagamento(
+    resultado: Annotated[
+        StatusPagamento,
+        Header(alias="X-Simular-Resultado", description=DESCRICAO_SIMULAR_RESULTADO),
+    ] = StatusPagamento.APROVADO,
+) -> GatewayPagamento:
+    return GatewayPagamentoMock(resultado)
+
+
+ServicoGatewayPagamento = Annotated[GatewayPagamento, Depends(obter_gateway_pagamento)]

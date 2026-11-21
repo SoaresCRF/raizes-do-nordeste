@@ -4,7 +4,6 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     Column,
-    Date,
     DateTime,
     Enum,
     ForeignKey,
@@ -20,18 +19,18 @@ from sqlalchemy import (
     func,
     true,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 
-from src.domain.estoque.estoque import TipoMovimentacao
-from src.domain.pagamento.pagamento import FormaPagamento
-from src.domain.pedido.pedido import CanalPedido, StatusPedido
-from src.domain.unidade.unidade import TipoUnidade
-from src.domain.usuario.usuario import PERFIS_LOTADOS_EM_UNIDADE, Perfil
+from src.domain.estoque import TipoMovimentacao
+from src.domain.fidelidade import TipoTransacaoFidelidade
+from src.domain.pagamento import FormaPagamento, StatusPagamento
+from src.domain.pedido import CanalPedido, StatusPedido
+from src.domain.unidade import TipoUnidade
+from src.domain.usuario import PERFIS_LOTADOS_EM_UNIDADE, FinalidadeConsentimento, Perfil
 
-# Nomes determinísticos de constraints e índices: o autogenerate e o downgrade
-# dependem deles para criar e remover exatamente os mesmos objetos.
 CONVENCAO_DE_NOMES = {
     "ix": "ix_%(column_0_label)s",
-    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "uq": "uq_%(table_name)s_%(column_0_N_name)s",
     "ck": "ck_%(table_name)s_%(constraint_name)s",
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     "pk": "pk_%(table_name)s",
@@ -41,8 +40,6 @@ metadata = MetaData(naming_convention=CONVENCAO_DE_NOMES)
 
 
 def _enum(tipo: type[StrEnum], nome: str) -> Enum:
-    # VARCHAR + CHECK em vez de ENUM nativo: o rollback não deixa tipos para trás
-    # e acrescentar um valor não exige ALTER TYPE.
     return Enum(tipo, name=nome, native_enum=False, create_constraint=True)
 
 
@@ -100,14 +97,8 @@ produto = Table(
     Column("descricao", Text),
     Column("preco", Numeric(10, 2), nullable=False),
     Column("ativo", Boolean, nullable=False, server_default=true()),
-    Column("disponivel_de", Date),
-    Column("disponivel_ate", Date),
     *_colunas_de_data(),
     CheckConstraint("preco > 0", name="preco_positivo"),
-    CheckConstraint(
-        "disponivel_de IS NULL OR disponivel_ate IS NULL OR disponivel_de <= disponivel_ate",
-        name="periodo_disponibilidade_valido",
-    ),
 )
 
 estoque = Table(
@@ -173,4 +164,75 @@ movimentacao_estoque = Table(
     Column("usuario_id", Integer, ForeignKey("usuario.id"), nullable=False),
     *_colunas_de_data(),
     CheckConstraint("quantidade > 0", name="quantidade_positiva"),
+)
+
+pagamento = Table(
+    "pagamento",
+    metadata,
+    Column("id", Integer, Identity(), primary_key=True),
+    Column("pedido_id", Integer, ForeignKey("pedido.id"), nullable=False),
+    Column("status", _enum(StatusPagamento, "status_pagamento"), nullable=False),
+    Column("valor", Numeric(10, 2), nullable=False),
+    Column("forma_pagamento", _enum(FormaPagamento, "forma_pagamento"), nullable=False),
+    Column("transacao_externa_id", String(80)),
+    Column("motivo_recusa", String(200)),
+    Column("payload_gateway", JSONB),
+    *_colunas_de_data(),
+    CheckConstraint("valor > 0", name="valor_positivo"),
+)
+
+consentimento = Table(
+    "consentimento",
+    metadata,
+    Column("id", Integer, Identity(), primary_key=True),
+    Column("usuario_id", Integer, ForeignKey("usuario.id"), nullable=False),
+    Column(
+        "finalidade", _enum(FinalidadeConsentimento, "finalidade_consentimento"), nullable=False
+    ),
+    Column("concedido", Boolean, nullable=False),
+    Column("versao_termo", String(20), nullable=False),
+    Column("registrado_em", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    *_colunas_de_data(),
+)
+
+transacao_fidelidade = Table(
+    "transacao_fidelidade",
+    metadata,
+    Column("id", Integer, Identity(), primary_key=True),
+    Column("cliente_id", Integer, ForeignKey("usuario.id"), nullable=False),
+    Column("tipo", _enum(TipoTransacaoFidelidade, "tipo_transacao_fidelidade"), nullable=False),
+    Column("pontos", Integer, nullable=False),
+    Column("pedido_id", Integer, ForeignKey("pedido.id"), nullable=False),
+    *_colunas_de_data(),
+    CheckConstraint("pontos <> 0", name="pontos_diferente_de_zero"),
+    CheckConstraint(
+        f"(tipo <> '{TipoTransacaoFidelidade.ACUMULO}' OR pontos > 0) "
+        f"AND (tipo <> '{TipoTransacaoFidelidade.RESGATE}' OR pontos < 0)",
+        name="sinal_conforme_tipo",
+    ),
+)
+
+log_auditoria = Table(
+    "log_auditoria",
+    metadata,
+    Column("id", Integer, Identity(), primary_key=True),
+    Column("usuario_id", Integer, ForeignKey("usuario.id")),
+    Column("unidade_id", Integer, ForeignKey("unidade.id")),
+    Column("acao", String(60), nullable=False),
+    Column("entidade", String(40), nullable=False),
+    Column("entidade_id", Integer, nullable=False),
+    Column("dados_antes", JSONB),
+    Column("dados_depois", JSONB),
+    Column("request_id", String(40)),
+    *_colunas_de_data(),
+    Index("ix_log_auditoria_entidade_entidade_id", "entidade", "entidade_id"),
+)
+
+sessao = Table(
+    "sessao",
+    metadata,
+    Column("id", Integer, Identity(), primary_key=True),
+    Column("usuario_id", Integer, ForeignKey("usuario.id"), nullable=False, index=True),
+    Column("revogada_em", DateTime(timezone=True)),
+    *_colunas_de_data(),
 )

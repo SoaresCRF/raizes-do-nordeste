@@ -4,7 +4,7 @@ from http import HTTPStatus
 from fastapi.responses import JSONResponse
 
 from src.api.schemas.base import EsquemaSaida
-from src.domain.erros.erros import (
+from src.domain.erros import (
     AcessoNegado,
     ConsentimentoAusente,
     CredenciaisInvalidas,
@@ -12,7 +12,6 @@ from src.domain.erros.erros import (
     EmailJaCadastrado,
     ErroDominio,
     EstoqueInsuficiente,
-    GatewayPagamentoIndisponivel,
     NaoAutenticado,
     PagamentoNaoPermitido,
     ProdutoIndisponivelNaUnidade,
@@ -20,18 +19,15 @@ from src.domain.erros.erros import (
     SaldoPontosInsuficiente,
     TransicaoStatusInvalida,
 )
-from src.infrastructure.logging.logger import request_id_atual
+from src.infrastructure.logger import request_id_atual
 
 ERRO_INTERNO = "ERRO_INTERNO"
 MENSAGEM_ERRO_INTERNO = "Erro interno no servidor"
 JSON_INVALIDO = "JSON_INVALIDO"
 MENSAGEM_JSON_INVALIDO = "Corpo da requisição não é um JSON válido"
-VALIDACAO_FALHOU = "VALIDACAO_FALHOU"
-MENSAGEM_VALIDACAO_FALHOU = "Dados de entrada inválidos"
 RECURSO_NAO_ENCONTRADO = "RECURSO_NAO_ENCONTRADO"
-# Fora do catálogo da seção 8: o Starlette devolve 405 e 413 e o formato padrão vale para eles.
 METODO_NAO_PERMITIDO = "METODO_NAO_PERMITIDO"
-CORPO_MUITO_GRANDE = "CORPO_MUITO_GRANDE"
+GATEWAY_PAGAMENTO_INDISPONIVEL = "GATEWAY_PAGAMENTO_INDISPONIVEL"
 
 STATUS_POR_ERRO: dict[type[ErroDominio], HTTPStatus] = {
     CredenciaisInvalidas: HTTPStatus.UNAUTHORIZED,
@@ -46,7 +42,6 @@ STATUS_POR_ERRO: dict[type[ErroDominio], HTTPStatus] = {
     ConsentimentoAusente: HTTPStatus.CONFLICT,
     SaldoPontosInsuficiente: HTTPStatus.CONFLICT,
     DadosInvalidos: HTTPStatus.UNPROCESSABLE_CONTENT,
-    GatewayPagamentoIndisponivel: HTTPStatus.SERVICE_UNAVAILABLE,
 }
 
 

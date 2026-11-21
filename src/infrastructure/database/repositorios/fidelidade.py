@@ -1,6 +1,6 @@
 from sqlalchemy import Connection, func, insert, select
 
-from src.domain.fidelidade.fidelidade import TipoTransacaoFidelidade, TransacaoFidelidade
+from src.domain.fidelidade import TipoTransacaoFidelidade, TransacaoFidelidade
 from src.infrastructure.database.tabelas import transacao_fidelidade
 
 

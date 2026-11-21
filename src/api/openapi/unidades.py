@@ -6,12 +6,12 @@ from src.api.openapi.respostas import (
     JSON_MALFORMADO,
     TOKEN_AUSENTE,
     UNIDADE_INEXISTENTE,
+    documentar_erros,
+    documentar_sucesso,
     perfil_sem_permissao,
-    resposta_de_sucesso,
-    respostas_de_erro,
     validacao_falhou,
 )
-from src.domain.usuario.usuario import Perfil
+from src.domain.usuario import Perfil
 
 UNIDADE_RECIFE = {
     "id": 1,
@@ -37,11 +37,10 @@ LISTAR_UNIDADES: dict[str, Any] = {
     "summary": "Listar unidades",
     "description": (
         "**Perfil:** público.\n\n"
-        "Unidades da rede, inclusive as inativas (campo `ativa`), em ordem de id, paginadas. "
-        "`regiao` filtra sem diferenciar maiúsculas."
+        "Unidades da rede, inclusive as inativas (campo `ativa`), em ordem de id, paginadas."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.OK,
             "Página de unidades",
             {
@@ -51,7 +50,7 @@ LISTAR_UNIDADES: dict[str, Any] = {
                 }
             },
         ),
-        **respostas_de_erro("/unidades", LIMIT_ACIMA_DO_MAXIMO),
+        **documentar_erros("/unidades", LIMIT_ACIMA_DO_MAXIMO),
     },
 }
 
@@ -59,9 +58,9 @@ CONSULTAR_UNIDADE: dict[str, Any] = {
     "summary": "Consultar unidade",
     "description": "**Perfil:** público.\n\nDados de uma unidade, ativa ou não.",
     "responses": {
-        **resposta_de_sucesso(HTTPStatus.OK, "Unidade", {"recife": UNIDADE_RECIFE}),
-        **respostas_de_erro("/unidades/99", UNIDADE_INEXISTENTE),
-        **respostas_de_erro("/unidades/abc", ID_NAO_INTEIRO),
+        **documentar_sucesso(HTTPStatus.OK, "Unidade", {"recife": UNIDADE_RECIFE}),
+        **documentar_erros("/unidades/99", UNIDADE_INEXISTENTE),
+        **documentar_erros("/unidades/abc", ID_NAO_INTEIRO),
     },
 }
 
@@ -86,7 +85,7 @@ CADASTRAR_UNIDADE: dict[str, Any] = {
         "`tipo` define o formato da unidade. A criação fica na auditoria."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.CREATED,
             "Unidade cadastrada",
             {
@@ -101,7 +100,7 @@ CADASTRAR_UNIDADE: dict[str, Any] = {
                 }
             },
         ),
-        **respostas_de_erro(
+        **documentar_erros(
             "/unidades",
             JSON_MALFORMADO,
             TOKEN_AUSENTE,
@@ -127,15 +126,15 @@ ATUALIZAR_UNIDADE: dict[str, Any] = {
         "validações do cadastro."
     ),
     "responses": {
-        **resposta_de_sucesso(HTTPStatus.OK, "Unidade atualizada", {"desativada": CARUARU_INATIVA}),
-        **respostas_de_erro(
+        **documentar_sucesso(HTTPStatus.OK, "Unidade atualizada", {"desativada": CARUARU_INATIVA}),
+        **documentar_erros(
             "/unidades/2",
             JSON_MALFORMADO,
             TOKEN_AUSENTE,
             perfil_sem_permissao(Perfil.GERENTE),
             validacao_falhou("ativa", "Campo obrigatório"),
         ),
-        **respostas_de_erro("/unidades/99", UNIDADE_INEXISTENTE),
+        **documentar_erros("/unidades/99", UNIDADE_INEXISTENTE),
     },
 }
 
@@ -143,12 +142,11 @@ CONSULTAR_CARDAPIO: dict[str, Any] = {
     "summary": "Consultar o cardápio da unidade",
     "description": (
         "**Perfil:** público.\n\n"
-        "Produtos que a unidade oferece hoje (RN03, RN24): ativos, com estoque cadastrado na "
-        "unidade e dentro do período de disponibilidade (sazonais, pelo dia UTC). `disponivel` "
-        "é `false` quando o saldo está zerado. Paginado, em ordem de produto."
+        "Produtos que a unidade oferece (RN03): ativos e com estoque cadastrado na unidade. "
+        "`disponivel` é `false` quando o saldo está zerado. Paginado, em ordem de produto."
     ),
     "responses": {
-        **resposta_de_sucesso(
+        **documentar_sucesso(
             HTTPStatus.OK,
             "Página do cardápio",
             {
@@ -173,8 +171,8 @@ CONSULTAR_CARDAPIO: dict[str, Any] = {
                 }
             },
         ),
-        **respostas_de_erro("/unidades/99/cardapio", UNIDADE_INEXISTENTE),
-        **respostas_de_erro(
+        **documentar_erros("/unidades/99/cardapio", UNIDADE_INEXISTENTE),
+        **documentar_erros(
             "/unidades/1/cardapio", validacao_falhou("page", "Deve ser maior ou igual a 1")
         ),
     },

@@ -14,15 +14,15 @@ from src.api.openapi.respostas import (
     sem_acesso_a_unidade,
     validacao_falhou,
 )
-from src.domain.erros.erros import (
+from src.domain.erros import (
     AcessoNegado,
     EstoqueInsuficiente,
     PagamentoNaoPermitido,
     ProdutoIndisponivelNaUnidade,
     TransicaoStatusInvalida,
 )
-from src.domain.pedido.pedido import MENSAGEM_ESTOQUE_INSUFICIENTE
-from src.domain.usuario.usuario import Perfil
+from src.domain.pedido import MENSAGEM_ESTOQUE_INSUFICIENTE
+from src.domain.usuario import Perfil
 
 PEDIDO_INEXISTENTE = nao_encontrado("Pedido 99 não encontrado")
 PAGAMENTO_NAO_PERMITIDO = ExemploErro(

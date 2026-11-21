@@ -12,8 +12,8 @@ from src.api.openapi.respostas import (
     perfil_sem_permissao,
     validacao_falhou,
 )
-from src.domain.erros.erros import EmailJaCadastrado
-from src.domain.usuario.usuario import Perfil
+from src.domain.erros import EmailJaCadastrado
+from src.domain.usuario import Perfil
 from src.infrastructure.database.repositorios.usuarios import MENSAGEM_EMAIL_JA_CADASTRADO
 
 EMAIL_JA_CADASTRADO = ExemploErro(

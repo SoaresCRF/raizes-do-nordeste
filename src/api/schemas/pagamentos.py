@@ -4,8 +4,8 @@ from pydantic import Field
 
 from src.api.schemas.base import EsquemaEntrada, EsquemaSaida, ValorMonetario
 from src.api.schemas.campos import ID_MAXIMO
-from src.domain.pagamento.pagamento import StatusPagamento
-from src.domain.pedido.pedido import StatusPedido
+from src.domain.pagamento import StatusPagamento
+from src.domain.pedido import StatusPedido
 
 MENSAGEM_APROVADO = "Pagamento aprovado; o pedido seguiu para o preparo"
 MENSAGEM_RECUSADO = "Pagamento recusado ({motivo}); o pedido continua aguardando pagamento"

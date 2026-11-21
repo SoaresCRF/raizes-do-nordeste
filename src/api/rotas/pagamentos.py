@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 
 from src.api.autenticacao import ClienteOuAtendenteLogado
 from src.api.dependencias import ConexaoBanco, ServicoGatewayPagamento
-from src.api.erros import resposta_de_erro
+from src.api.erros import GATEWAY_PAGAMENTO_INDISPONIVEL, resposta_de_erro
 from src.api.openapi import pagamentos as documentacao
 from src.api.schemas.pagamentos import (
     MENSAGEM_APROVADO,
@@ -14,9 +14,8 @@ from src.api.schemas.pagamentos import (
     PagamentoRegistradoResposta,
     SolicitacaoPagamento,
 )
-from src.application.pagamentos.pagamentos import solicitar_pagamento
-from src.domain.erros.erros import GatewayPagamentoIndisponivel
-from src.domain.pagamento.pagamento import Pagamento, StatusPagamento
+from src.application.pagamentos import solicitar_pagamento
+from src.domain.pagamento import Pagamento, StatusPagamento
 
 roteador = APIRouter(prefix="/pagamentos", tags=["Pagamentos"])
 
@@ -46,7 +45,7 @@ def solicitar_pagamento_do_pedido(
     if pagamento.status == StatusPagamento.ERRO:
         return resposta_de_erro(
             HTTPStatus.SERVICE_UNAVAILABLE,
-            GatewayPagamentoIndisponivel.codigo,
+            GATEWAY_PAGAMENTO_INDISPONIVEL,
             f"Gateway de pagamento indisponível; pagamento {pagamento.id} registrado com erro",
             request.url.path,
         )

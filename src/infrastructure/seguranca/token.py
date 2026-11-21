@@ -2,8 +2,8 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 
-from src.domain.erros.erros import NaoAutenticado
-from src.domain.usuario.usuario import Perfil, Usuario, UsuarioAutenticado
+from src.domain.erros import NaoAutenticado
+from src.domain.usuario import Perfil, Usuario, UsuarioAutenticado
 
 ALGORITMO = "HS256"
 CLAIMS_OBRIGATORIAS = ["sub", "perfil", "sid", "exp"]

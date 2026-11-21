@@ -4,7 +4,7 @@ from pydantic import Field, StringConstraints
 
 from src.api.schemas.base import EsquemaEntrada, EsquemaSaida
 from src.api.schemas.campos import ID_MAXIMO
-from src.domain.estoque.estoque import SALDO_MAXIMO, TipoMovimentacao
+from src.domain.estoque import SALDO_MAXIMO, TipoMovimentacao
 
 TAMANHO_MAXIMO_MOTIVO = 200
 

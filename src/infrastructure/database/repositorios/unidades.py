@@ -2,7 +2,7 @@ from dataclasses import asdict
 
 from sqlalchemy import Connection, func, insert, select, update
 
-from src.domain.unidade.unidade import DadosUnidade, Unidade
+from src.domain.unidade import DadosUnidade, Unidade
 from src.infrastructure.database.tabelas import unidade
 
 

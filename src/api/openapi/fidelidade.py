@@ -11,8 +11,8 @@ from src.api.openapi.respostas import (
     perfil_sem_permissao,
     validacao_falhou,
 )
-from src.domain.erros.erros import ConsentimentoAusente, SaldoPontosInsuficiente
-from src.domain.usuario.usuario import Perfil
+from src.domain.erros import ConsentimentoAusente, SaldoPontosInsuficiente
+from src.domain.usuario import Perfil
 
 ATENDENTE_SEM_PERMISSAO = perfil_sem_permissao(Perfil.ATENDENTE)
 

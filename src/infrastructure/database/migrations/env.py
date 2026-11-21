@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import create_engine, pool
 
-from src.config.configuracao import carregar_configuracao
+from src.config import carregar_configuracao
 from src.infrastructure.database.tabelas import metadata
 
 config = context.config

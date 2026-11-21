@@ -4,7 +4,7 @@ from pydantic import Field
 
 from src.api.schemas.base import DataHoraUtc, EsquemaEntrada, EsquemaSaida, ValorMonetario
 from src.api.schemas.campos import ID_MAXIMO
-from src.domain.fidelidade.fidelidade import PONTOS_POR_RESGATE, TipoTransacaoFidelidade
+from src.domain.fidelidade import PONTOS_POR_RESGATE, TipoTransacaoFidelidade
 
 
 class SaldoPontosResposta(EsquemaSaida):

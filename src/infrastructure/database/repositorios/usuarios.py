@@ -1,8 +1,8 @@
 from sqlalchemy import Connection, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 
-from src.domain.erros.erros import DetalheErro, EmailJaCadastrado
-from src.domain.usuario.usuario import Perfil, Usuario
+from src.domain.erros import DetalheErro, EmailJaCadastrado
+from src.domain.usuario import Perfil, Usuario
 from src.infrastructure.database.tabelas import usuario
 
 RESTRICAO_EMAIL_UNICO = "uq_usuario_email"

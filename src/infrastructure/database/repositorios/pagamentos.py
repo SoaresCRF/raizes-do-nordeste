@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from sqlalchemy import Connection, insert, select
 
-from src.domain.pagamento.pagamento import FormaPagamento, Pagamento, StatusPagamento
+from src.domain.pagamento import FormaPagamento, Pagamento, StatusPagamento
 from src.infrastructure.database.tabelas import pagamento
 
 

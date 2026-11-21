@@ -2,7 +2,7 @@ from dataclasses import asdict
 
 from sqlalchemy import ColumnElement, Connection, func, insert, select, update
 
-from src.domain.produto.produto import DadosProduto, ItemCardapio, Produto
+from src.domain.produto import DadosProduto, ItemCardapio, Produto
 from src.infrastructure.database.tabelas import estoque, produto
 
 _PRODUTO_COM_ESTOQUE = produto.join(estoque, estoque.c.produto_id == produto.c.id)

@@ -4,7 +4,7 @@ from pydantic import StringConstraints
 
 from src.api.schemas.base import DataHoraUtc, EsquemaEntrada, EsquemaSaida
 from src.api.schemas.campos import Email, Nome, Senha
-from src.domain.usuario.usuario import FinalidadeConsentimento, Perfil
+from src.domain.usuario import FinalidadeConsentimento, Perfil
 
 TAMANHO_MAXIMO_VERSAO_TERMO = 20
 

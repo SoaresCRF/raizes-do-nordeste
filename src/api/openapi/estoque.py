@@ -12,7 +12,7 @@ from src.api.openapi.respostas import (
     sem_acesso_a_unidade,
     validacao_falhou,
 )
-from src.domain.erros.erros import EstoqueInsuficiente
+from src.domain.erros import EstoqueInsuficiente
 
 UNIDADE_DO_FILTRO_AUSENTE = validacao_falhou("unidadeId", "Campo obrigatório")
 

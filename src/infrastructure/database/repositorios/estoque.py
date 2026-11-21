@@ -1,7 +1,7 @@
 from sqlalchemy import Connection, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
-from src.domain.estoque.estoque import (
+from src.domain.estoque import (
     Estoque,
     MovimentacaoEstoque,
     SaldoProduto,

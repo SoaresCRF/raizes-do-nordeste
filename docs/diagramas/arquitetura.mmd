@@ -23,19 +23,19 @@ flowchart TB
     clientes(["Canais: App, Web, Totem, Pickup, Balcão"])
 
     subgraph api["API · src/api"]
-        rotas["rotas, schemas, autenticação,<br/>middlewares, tratador de erros, OpenAPI"]
+        rotas["rotas, schemas, autenticação,<br/>middleware de requisição, tratador de erros, OpenAPI"]
     end
 
     subgraph application["Application · src/application"]
         casos["casos de uso por recurso"]
-        portas["portas: GatewayPagamento"]
+        portas["gateway_pagamento: GatewayPagamento"]
     end
 
     subgraph infrastructure["Infrastructure · src/infrastructure"]
-        pagamento["pagamento: GatewayPagamentoMock"]
+        pagamento["gateway_mock: GatewayPagamentoMock"]
         banco["database: tabelas, migrations,<br/>repositórios, seed"]
         seguranca["seguranca: hash argon2, JWT"]
-        logging["logging: logs JSON com request_id"]
+        logging["logger: logs JSON com request_id"]
     end
 
     subgraph domain["Domain · src/domain"]
@@ -58,6 +58,7 @@ flowchart TB
     banco --> logging
     banco --> entidades
     seguranca --> entidades
+    pagamento --> entidades
     banco --> postgres
 
     classDef nucleo fill:#E6EEF6,stroke:#2F5F8A,stroke-width:1.5px,color:#102A43

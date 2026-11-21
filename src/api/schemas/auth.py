@@ -4,7 +4,7 @@ from pydantic import StringConstraints
 
 from src.api.schemas.base import EsquemaEntrada, EsquemaSaida
 from src.api.schemas.campos import TAMANHO_MAXIMO_SENHA, Email
-from src.domain.usuario.usuario import Perfil
+from src.domain.usuario import Perfil
 
 TIPO_TOKEN = "Bearer"
 

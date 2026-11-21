@@ -8,14 +8,14 @@ from src.api.erros import (
     MENSAGEM_JSON_INVALIDO,
     RespostaErro,
 )
-from src.domain.erros.erros import (
+from src.domain.erros import (
     MENSAGEM_DADOS_INVALIDOS,
     AcessoNegado,
     DadosInvalidos,
     NaoAutenticado,
     RecursoNaoEncontrado,
 )
-from src.domain.usuario.usuario import MENSAGEM_SEM_ACESSO_A_UNIDADE, Perfil
+from src.domain.usuario import MENSAGEM_SEM_ACESSO_A_UNIDADE, Perfil
 
 TIMESTAMP_EXEMPLO = "2026-02-05T12:00:00Z"
 REQUEST_ID_EXEMPLO = "3f2c9a4e-7b1d-4c2a-9e8f-5d6c7b8a9e0f"

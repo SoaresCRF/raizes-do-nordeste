@@ -10,8 +10,8 @@ from src.api.openapi.respostas import (
     documentar_sucesso,
     validacao_falhou,
 )
-from src.application.auth.sessoes import MENSAGEM_CREDENCIAIS_INVALIDAS
-from src.domain.erros.erros import CredenciaisInvalidas
+from src.application.auth import MENSAGEM_CREDENCIAIS_INVALIDAS
+from src.domain.erros import CredenciaisInvalidas
 
 ACCESS_TOKEN_EXEMPLO = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1In0.assinatura"
 EXPIRES_IN_EXEMPLO = 3600

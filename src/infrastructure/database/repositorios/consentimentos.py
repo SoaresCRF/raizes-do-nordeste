@@ -1,7 +1,7 @@
 from sqlalchemy import Connection, insert, select
 from sqlalchemy.dialects.postgresql import distinct_on
 
-from src.domain.usuario.usuario import Consentimento, FinalidadeConsentimento
+from src.domain.usuario import Consentimento, FinalidadeConsentimento
 from src.infrastructure.database.tabelas import consentimento
 
 

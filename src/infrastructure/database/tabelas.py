@@ -21,12 +21,12 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 
-from src.domain.estoque.estoque import TipoMovimentacao
-from src.domain.fidelidade.fidelidade import TipoTransacaoFidelidade
-from src.domain.pagamento.pagamento import FormaPagamento, StatusPagamento
-from src.domain.pedido.pedido import CanalPedido, StatusPedido
-from src.domain.unidade.unidade import TipoUnidade
-from src.domain.usuario.usuario import PERFIS_LOTADOS_EM_UNIDADE, FinalidadeConsentimento, Perfil
+from src.domain.estoque import TipoMovimentacao
+from src.domain.fidelidade import TipoTransacaoFidelidade
+from src.domain.pagamento import FormaPagamento, StatusPagamento
+from src.domain.pedido import CanalPedido, StatusPedido
+from src.domain.unidade import TipoUnidade
+from src.domain.usuario import PERFIS_LOTADOS_EM_UNIDADE, FinalidadeConsentimento, Perfil
 
 CONVENCAO_DE_NOMES = {
     "ix": "ix_%(column_0_label)s",

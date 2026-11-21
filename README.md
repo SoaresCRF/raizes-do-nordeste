@@ -4,14 +4,12 @@ API REST da rede de lanchonetes Raízes do Nordeste, desenvolvida como projeto d
 
 O fluxo entregue completo é o Fluxo A do roteiro: criar pedido, validar itens e estoque, registrar o pagamento mock e atualizar o status do pedido.
 
-Stack: Python 3.14, FastAPI, SQLAlchemy 2 + Alembic, PostgreSQL 17 (Docker).
-
 Repositório: <https://github.com/SoaresCRF/raizes-do-nordeste>.
 
 ## Requisitos
 
 - Python 3.14 e [uv](https://docs.astral.sh/uv/) 0.12 ou superior
-- Docker com Docker Compose
+- Docker com Docker Compose, que sobe o banco PostgreSQL 17 (não é preciso instalar o PostgreSQL)
 
 Dependências da aplicação, instaladas pelo `uv sync` a partir do `pyproject.toml` e do `uv.lock`: FastAPI e Uvicorn (API), SQLAlchemy 2 e Alembic (ORM e migrations), psycopg 3 (driver do PostgreSQL), pydantic-settings (configuração), PyJWT (token), argon2-cffi (hash de senha) e email-validator. Para desenvolvimento: ruff.
 
@@ -39,7 +37,7 @@ Dependências da aplicação, instaladas pelo `uv sync` a partir do `pyproject.t
 
 ## Variáveis de ambiente
 
-O `.env` é lido pela API e pelo `docker compose`. Se alguma variável que a API usa estiver ausente ou inválida, ela não sobe e lista as variáveis com problema.
+O `.env` é lido pela API e pelo `docker compose`. Se alguma variável que a API usa estiver ausente ou inválida, a API não sobe e lista as variáveis com problema.
 
 | Variável | Uso | Valor no exemplo |
 |---|---|---|
@@ -83,11 +81,11 @@ Com o banco no ar e as migrations aplicadas:
 uv run python -m src.main
 ```
 
-A API sobe em `http://127.0.0.1:<PORTA>`, com a porta definida no `.env` (8000 no exemplo). Os logs saem no terminal em JSON, uma linha por evento, com o `request_id` de cada requisição.
+A API sobe em `http://127.0.0.1:<PORTA>`, com a porta definida no `.env` (8000 no exemplo).
 
 ## Documentação da API
 
-Com a API no ar, o Swagger fica em <http://127.0.0.1:8000/docs> e o contrato OpenAPI 3.1 em <http://127.0.0.1:8000/docs/openapi.json> (troque o 8000 se mudou a `PORTA` no `.env`). Cada rota traz o perfil autorizado, as regras que aplica, exemplos de request e de response e todos os status de erro, sempre no formato de erro padrão (`RespostaErro`). Para chamar uma rota protegida pela própria página, faça o `POST /auth/login`, copie o `accessToken` e cole-o no botão **Authorize**.
+Com a API no ar, o Swagger fica em <http://127.0.0.1:8000/docs> e o contrato OpenAPI 3.1 em <http://127.0.0.1:8000/docs/openapi.json> (troque o 8000 se mudou a `PORTA` no `.env`). No Swagger, para chamar uma rota protegida, faça o `POST /auth/login`, copie o `accessToken` e cole-o no botão **Authorize**.
 
 O mesmo contrato fica versionado em [`docs/openapi.json`](docs/openapi.json), legível sem subir a API.
 
@@ -100,11 +98,6 @@ Os diagramas ficam em [`docs/diagramas/`](docs/diagramas/), cada um com a fonte 
   - `estoque` guarda o saldo de um `produto` numa `unidade`; cada entrada ou saída vira uma `movimentacao_estoque`, ligada ao pedido quando é ele que movimenta o estoque.
   - `usuario` tem perfil e, para os perfis de loja, uma `unidade`; o cliente tem `consentimento` (LGPD) e `transacao_fidelidade` gerada pelos pedidos.
   - `log_auditoria` registra as ações sensíveis com o usuário e a unidade; `sessao` guarda as sessões de login de cada usuário, revogadas no logout.
-- [Casos de uso](docs/diagramas/casos-de-uso.png): atores e casos de uso UC01 a UC13; o Mermaid não tem notação própria de caso de uso, por isso atores são círculos e casos de uso, elipses.
-- [Classes de domínio](docs/diagramas/classes.png): entidades de `src/domain/` com seus campos, enums e a interface do gateway de pagamento.
-- [Arquitetura em camadas](docs/diagramas/arquitetura.png): API, Application, Domain e Infrastructure e o sentido das dependências.
-- [Atividades do Fluxo A](docs/diagramas/atividades-fluxo-a.png): pedido, pagamento simulado e atualização de status, com os desvios de erro.
-- [Sequência do Fluxo A](docs/diagramas/sequencia-fluxo-a.png): as mesmas etapas entre rotas, casos de uso, banco e gateway.
 
 ## Testes
 
@@ -125,4 +118,4 @@ A coleção `postman/raizes-do-nordeste.postman_collection.json` tem uma requisi
      -e postman/raizes-do-nordeste.postman_environment.json
    ```
 
-Não é preciso copiar token: as requisições de login guardam o token de cada perfil no ambiente, e os ids criados no caminho também ficam no ambiente. Para rodar de novo, rode o seed antes.
+Não é preciso copiar token: as requisições de login guardam o token de cada perfil no ambiente, onde também ficam os ids criados no caminho. Para rodar de novo, rode o seed antes.

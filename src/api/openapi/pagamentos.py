@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from typing import Any
 
+from src.api.erros import GATEWAY_PAGAMENTO_INDISPONIVEL
 from src.api.openapi.pedidos import PAGAMENTO_NAO_PERMITIDO, PEDIDO_INEXISTENTE
 from src.api.openapi.respostas import (
     JSON_MALFORMADO,
@@ -12,9 +13,8 @@ from src.api.openapi.respostas import (
     validacao_falhou,
 )
 from src.api.schemas.pagamentos import MENSAGEM_APROVADO, MENSAGEM_RECUSADO
-from src.domain.erros.erros import GatewayPagamentoIndisponivel
-from src.domain.usuario.usuario import Perfil
-from src.infrastructure.pagamento.gateway_mock import MOTIVO_RECUSA_SIMULADA
+from src.domain.usuario import Perfil
+from src.infrastructure.gateway_mock import MOTIVO_RECUSA_SIMULADA
 
 TRANSACAO_APROVADA = "MOCK-3b9f0c2a7d5e4f1a8c6b9d0e2f4a6c8e"
 TRANSACAO_RECUSADA = "MOCK-9d1e7a3c5b0f4e2a8c6d1b3f5a7e9c0d"
@@ -87,7 +87,7 @@ SOLICITAR_PAGAMENTO: dict[str, Any] = {
             validacao_falhou("pedidoId", "Campo obrigatório"),
             ExemploErro(
                 HTTPStatus.SERVICE_UNAVAILABLE,
-                GatewayPagamentoIndisponivel.codigo,
+                GATEWAY_PAGAMENTO_INDISPONIVEL,
                 "Gateway de pagamento indisponível; pagamento 32 registrado com erro",
             ),
         ),

@@ -23,15 +23,15 @@ from src.api.schemas.pedidos import (
     PedidoResumoResposta,
     StatusAlteradoResposta,
 )
-from src.application.pedidos.pedidos import (
+from src.application.pedidos import (
     alterar_status,
     cancelar_pedido,
     consultar_pedido,
     criar_pedido,
     listar_pedidos,
 )
-from src.domain.pagamento.pagamento import Pagamento
-from src.domain.pedido.pedido import (
+from src.domain.pagamento import Pagamento
+from src.domain.pedido import (
     CanalPedido,
     DadosPedido,
     FiltrosPedido,

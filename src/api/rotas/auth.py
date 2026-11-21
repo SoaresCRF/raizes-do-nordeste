@@ -7,7 +7,7 @@ from src.api.autenticacao import UsuarioLogado
 from src.api.dependencias import ConexaoBanco, ServicoToken
 from src.api.openapi import auth as documentacao
 from src.api.schemas.auth import Credenciais, TokensEmitidos, UsuarioDaSessao
-from src.application.auth.sessoes import encerrar_sessao, iniciar_sessao
+from src.application.auth import encerrar_sessao, iniciar_sessao
 
 roteador = APIRouter(prefix="/auth", tags=["Auth"])
 

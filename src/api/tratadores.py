@@ -18,7 +18,7 @@ from src.api.erros import (
     resposta_de_erro,
 )
 from src.api.validacao import detalhes_de_validacao
-from src.domain.erros.erros import MENSAGEM_DADOS_INVALIDOS, DadosInvalidos, ErroDominio
+from src.domain.erros import MENSAGEM_DADOS_INVALIDOS, DadosInvalidos, ErroDominio
 
 logger = logging.getLogger(__name__)
 

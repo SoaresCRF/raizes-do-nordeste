@@ -3334,7 +3334,7 @@
             "in": "header",
             "required": false,
             "schema": {
-              "$ref": "#/components/schemas/ResultadoSimulado",
+              "$ref": "#/components/schemas/StatusPagamento",
               "description": "Só para o gateway simulado: escolhe o resultado do mock: `APROVADO` (padrão), `RECUSADO` ou `ERRO`.",
               "default": "APROVADO"
             },
@@ -5523,15 +5523,6 @@
           "requestId"
         ],
         "title": "RespostaErro"
-      },
-      "ResultadoSimulado": {
-        "type": "string",
-        "enum": [
-          "APROVADO",
-          "RECUSADO",
-          "ERRO"
-        ],
-        "title": "ResultadoSimulado"
       },
       "SaldoPontosResposta": {
         "properties": {

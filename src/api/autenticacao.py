@@ -5,9 +5,9 @@ from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from src.api.dependencias import ConexaoBanco, ServicoToken
-from src.application.auth.sessoes import autenticar
-from src.domain.erros.erros import AcessoNegado, NaoAutenticado
-from src.domain.usuario.usuario import Perfil, UsuarioAutenticado
+from src.application.auth import autenticar
+from src.domain.erros import AcessoNegado, NaoAutenticado
+from src.domain.usuario import Perfil, UsuarioAutenticado
 
 MENSAGEM_TOKEN_AUSENTE = "Token de acesso ausente"
 MENSAGEM_PERFIL_SEM_PERMISSAO = "Perfil {perfil} sem permissão para esta operação"

@@ -14,15 +14,15 @@ from src.api.schemas.unidades import (
     NovaUnidade,
     UnidadeResposta,
 )
-from src.application.produtos.produtos import consultar_cardapio
-from src.application.unidades.unidades import (
+from src.application.produtos import consultar_cardapio
+from src.application.unidades import (
     atualizar_unidade,
     cadastrar_unidade,
     consultar_unidade,
     listar_unidades,
 )
-from src.domain.unidade.unidade import DadosUnidade
-from src.domain.usuario.usuario import Perfil
+from src.domain.unidade import DadosUnidade
+from src.domain.usuario import Perfil
 
 roteador = APIRouter(prefix="/unidades", tags=["Unidades"])
 

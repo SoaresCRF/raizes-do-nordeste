@@ -4,9 +4,9 @@ from pydantic import Field, StringConstraints
 
 from src.api.schemas.base import DataHoraUtc, EsquemaEntrada, EsquemaSaida, ValorMonetario
 from src.api.schemas.campos import ID_MAXIMO
-from src.domain.estoque.estoque import SALDO_MAXIMO
-from src.domain.pagamento.pagamento import FormaPagamento, StatusPagamento
-from src.domain.pedido.pedido import CanalPedido, StatusPedido
+from src.domain.estoque import SALDO_MAXIMO
+from src.domain.pagamento import FormaPagamento, StatusPagamento
+from src.domain.pedido import CanalPedido, StatusPedido
 
 TAMANHO_MAXIMO_MOTIVO_CANCELAMENTO = 200
 

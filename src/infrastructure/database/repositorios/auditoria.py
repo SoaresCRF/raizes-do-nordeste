@@ -1,9 +1,9 @@
 from sqlalchemy import ColumnElement, Connection, func, insert, select
 
-from src.domain.auditoria.auditoria import AcaoAuditoria, FiltrosAuditoria, LogAuditoria
-from src.domain.pedido.pedido import ENTIDADE_PEDIDO, Pedido
+from src.domain.auditoria import AcaoAuditoria, FiltrosAuditoria, LogAuditoria
+from src.domain.pedido import ENTIDADE_PEDIDO, Pedido
 from src.infrastructure.database.tabelas import log_auditoria
-from src.infrastructure.logging.logger import request_id_atual
+from src.infrastructure.logger import request_id_atual
 
 
 def _montar_condicoes(filtros: FiltrosAuditoria) -> list[ColumnElement[bool]]:

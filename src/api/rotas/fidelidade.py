@@ -13,12 +13,12 @@ from src.api.schemas.fidelidade import (
     TransacaoFidelidadeResposta,
 )
 from src.api.schemas.paginacao import Pagina, ParametrosPaginacao, obter_paginacao
-from src.application.fidelidade.fidelidade import (
+from src.application.fidelidade import (
     consultar_saldo,
     listar_historico,
     resgatar_pontos,
 )
-from src.domain.fidelidade.fidelidade import calcular_valor_dos_pontos
+from src.domain.fidelidade import calcular_valor_dos_pontos
 
 roteador = APIRouter(prefix="/fidelidade", tags=["Fidelidade"])
 

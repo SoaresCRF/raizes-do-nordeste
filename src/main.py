@@ -5,7 +5,7 @@ from datetime import timedelta
 import uvicorn
 from fastapi import APIRouter, FastAPI
 
-from src.api.middlewares.requisicao import MiddlewareRequisicao
+from src.api.middleware import MiddlewareRequisicao
 from src.api.openapi.exemplos import preservar_exemplos
 from src.api.openapi.geral import DESCRICAO_API, TAGS
 from src.api.rotas import auditoria as rotas_auditoria
@@ -18,9 +18,9 @@ from src.api.rotas import produtos as rotas_produtos
 from src.api.rotas import unidades as rotas_unidades
 from src.api.rotas import usuarios as rotas_usuarios
 from src.api.tratadores import registrar_tratadores_de_erro
-from src.config.configuracao import Configuracao, carregar_configuracao
+from src.config import Configuracao, carregar_configuracao
 from src.infrastructure.database.conexao import criar_engine
-from src.infrastructure.logging.logger import configurar_logging
+from src.infrastructure.logger import configurar_logging
 from src.infrastructure.seguranca.token import ServicoTokenJwt
 
 HOST = "127.0.0.1"

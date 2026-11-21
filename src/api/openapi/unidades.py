@@ -11,7 +11,7 @@ from src.api.openapi.respostas import (
     perfil_sem_permissao,
     validacao_falhou,
 )
-from src.domain.usuario.usuario import Perfil
+from src.domain.usuario import Perfil
 
 UNIDADE_RECIFE = {
     "id": 1,

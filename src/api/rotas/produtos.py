@@ -9,15 +9,15 @@ from src.api.openapi import produtos as documentacao
 from src.api.schemas.campos import IdDoRecurso
 from src.api.schemas.paginacao import Pagina, ParametrosPaginacao, obter_paginacao
 from src.api.schemas.produtos import AlteracaoProduto, NovoProduto, ProdutoResposta
-from src.application.produtos.produtos import (
+from src.application.produtos import (
     atualizar_produto,
     cadastrar_produto,
     consultar_produto,
     desativar_produto,
     listar_produtos,
 )
-from src.domain.produto.produto import DadosProduto
-from src.domain.usuario.usuario import Perfil
+from src.domain.produto import DadosProduto
+from src.domain.usuario import Perfil
 
 roteador = APIRouter(prefix="/produtos", tags=["Produtos"])
 

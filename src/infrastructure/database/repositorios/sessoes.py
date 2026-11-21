@@ -1,6 +1,6 @@
-from sqlalchemy import Connection, func, insert, select, update
+from sqlalchemy import ColumnElement, Connection, func, insert, select, update
 
-from src.domain.usuario.usuario import Sessao
+from src.domain.usuario import Sessao
 from src.infrastructure.database.tabelas import sessao
 
 
@@ -21,15 +21,14 @@ class RepositorioSessoes:
         return self._conexao.execute(consulta).first() is not None
 
     def revogar(self, sessao_id: int) -> None:
-        self._conexao.execute(
-            update(sessao)
-            .where(sessao.c.id == sessao_id, sessao.c.revogada_em.is_(None))
-            .values(revogada_em=func.now())
-        )
+        self._revogar_ativas(sessao.c.id == sessao_id)
 
     def revogar_do_usuario(self, usuario_id: int) -> None:
+        self._revogar_ativas(sessao.c.usuario_id == usuario_id)
+
+    def _revogar_ativas(self, filtro: ColumnElement[bool]) -> None:
         self._conexao.execute(
             update(sessao)
-            .where(sessao.c.usuario_id == usuario_id, sessao.c.revogada_em.is_(None))
+            .where(filtro, sessao.c.revogada_em.is_(None))
             .values(revogada_em=func.now())
         )

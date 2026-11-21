@@ -9,8 +9,8 @@ from src.api.openapi import estoque as documentacao
 from src.api.schemas.campos import ID_MAXIMO
 from src.api.schemas.estoque import MovimentacaoResposta, NovaMovimentacao, SaldoResposta
 from src.api.schemas.paginacao import Pagina, ParametrosPaginacao, obter_paginacao
-from src.application.estoque.estoque import consultar_saldos, movimentar_estoque
-from src.domain.estoque.estoque import DadosMovimentacao
+from src.application.estoque import consultar_saldos, movimentar_estoque
+from src.domain.estoque import DadosMovimentacao
 
 roteador = APIRouter(prefix="/estoque", tags=["Estoque"])
 

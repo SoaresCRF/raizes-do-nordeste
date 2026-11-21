@@ -2,8 +2,8 @@ from decimal import Decimal
 
 from sqlalchemy import ColumnElement, Connection, Select, func, insert, select, update
 
-from src.domain.pagamento.pagamento import FormaPagamento
-from src.domain.pedido.pedido import (
+from src.domain.pagamento import FormaPagamento
+from src.domain.pedido import (
     CanalPedido,
     FiltrosPedido,
     ItemPedido,

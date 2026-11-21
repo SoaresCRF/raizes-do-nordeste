@@ -12,9 +12,9 @@ from src.api.schemas.usuarios import (
     NovoConsentimento,
     UsuarioCriado,
 )
-from src.application.usuarios.cadastro import cadastrar_cliente
-from src.application.usuarios.conta import (
+from src.application.usuarios import (
     anonimizar_conta,
+    cadastrar_cliente,
     registrar_consentimento,
 )
 

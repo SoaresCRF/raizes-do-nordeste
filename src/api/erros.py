@@ -4,7 +4,7 @@ from http import HTTPStatus
 from fastapi.responses import JSONResponse
 
 from src.api.schemas.base import EsquemaSaida
-from src.domain.erros.erros import (
+from src.domain.erros import (
     AcessoNegado,
     ConsentimentoAusente,
     CredenciaisInvalidas,
@@ -19,7 +19,7 @@ from src.domain.erros.erros import (
     SaldoPontosInsuficiente,
     TransicaoStatusInvalida,
 )
-from src.infrastructure.logging.logger import request_id_atual
+from src.infrastructure.logger import request_id_atual
 
 ERRO_INTERNO = "ERRO_INTERNO"
 MENSAGEM_ERRO_INTERNO = "Erro interno no servidor"
@@ -27,6 +27,7 @@ JSON_INVALIDO = "JSON_INVALIDO"
 MENSAGEM_JSON_INVALIDO = "Corpo da requisição não é um JSON válido"
 RECURSO_NAO_ENCONTRADO = "RECURSO_NAO_ENCONTRADO"
 METODO_NAO_PERMITIDO = "METODO_NAO_PERMITIDO"
+GATEWAY_PAGAMENTO_INDISPONIVEL = "GATEWAY_PAGAMENTO_INDISPONIVEL"
 
 STATUS_POR_ERRO: dict[type[ErroDominio], HTTPStatus] = {
     CredenciaisInvalidas: HTTPStatus.UNAUTHORIZED,

@@ -4,8 +4,9 @@ from typing import Annotated
 from fastapi import Depends, Header, Request
 from sqlalchemy import Connection
 
-from src.application.portas.gateway_pagamento import GatewayPagamento
-from src.infrastructure.pagamento.gateway_mock import GatewayPagamentoMock, ResultadoSimulado
+from src.application.gateway_pagamento import GatewayPagamento
+from src.domain.pagamento import StatusPagamento
+from src.infrastructure.gateway_mock import GatewayPagamentoMock
 from src.infrastructure.seguranca.token import ServicoTokenJwt
 
 
@@ -32,9 +33,9 @@ DESCRICAO_SIMULAR_RESULTADO = (
 
 def obter_gateway_pagamento(
     resultado: Annotated[
-        ResultadoSimulado,
+        StatusPagamento,
         Header(alias="X-Simular-Resultado", description=DESCRICAO_SIMULAR_RESULTADO),
-    ] = ResultadoSimulado.APROVADO,
+    ] = StatusPagamento.APROVADO,
 ) -> GatewayPagamento:
     return GatewayPagamentoMock(resultado)
 
